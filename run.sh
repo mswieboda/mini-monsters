@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DIR=`dirname "$0"`
-NAME=game_sf_template
+NAME=mini_monsters
 LIB=/usr/local/lib
 FRAMEWORKS=/Library/Frameworks
 

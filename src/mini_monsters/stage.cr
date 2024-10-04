@@ -1,7 +1,7 @@
 require "./scene/start"
 require "./scene/main"
 
-module GameSFTemplate
+module MiniMonsters
   class Stage < GSF::Stage
     getter start
     getter main

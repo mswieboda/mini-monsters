@@ -1,4 +1,4 @@
-module GameSFTemplate
+module MiniMonsters
   class Player
     getter x : Int32 | Float32
     getter y : Int32 | Float32

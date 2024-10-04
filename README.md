@@ -1,12 +1,4 @@
-# Game SF Template
-
-## Rename
-
-Currently only works on Mac or Linux.
-
-To use this template, use the rename script, and follow the prompts, to automatically replace all text, and rename all files and folders from the example of `GameSFTemplate`, `game_sf_template` and `Game SF Template`.
-
-```
+# Mini Monsters
 make rename
 ```
 
@@ -88,7 +80,7 @@ make winpack
 
 you'll need `7z` ([7zip](https://www.7-zip.org/) binary) installed ([download](https://www.7-zip.org/))
 
-zips up SFML DLLs, assets, `run.bat` (basically the .exe) to `build/game_sf_template-win.zip`
+zips up SFML DLLs, assets, `run.bat` (basically the .exe) to `build/mini_monsters-win.zip`
 
 #### Mac
 
@@ -102,4 +94,4 @@ you'll need installed:
 - `7zz` ([7zip](https://www.7-zip.org/) binary) via `brew install 7zip`
 - `platypus` ([Platypus](https://sveinbjorn.org/platypus) binary) via `brew install --cask platypus` then in `Platypus > Preferences` install the command line tool
 
-zips up SFML libs, ext libs, assets, `game_sf_template.app` (created by [Platypus](https://sveinbjorn.org/platypus)) to `build/game_sf_template-mac.zip`
+zips up SFML libs, ext libs, assets, `mini_monsters.app` (created by [Platypus](https://sveinbjorn.org/platypus)) to `build/mini_monsters-mac.zip`

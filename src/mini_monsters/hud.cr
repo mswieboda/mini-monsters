@@ -1,6 +1,6 @@
 require "./font"
 
-module GameSFTemplate
+module MiniMonsters
   class HUD
     getter text
 

@@ -1,12 +1,12 @@
-name: game_sf_template
+name: mini_monsters
 version: 0.1.7
 
 authors:
   - Matt Swieboda <mswieboda@users.noreply.github.com>
 
 targets:
-  game_sf_template:
-    main: src/game_sf_template.cr
+  mini_monsters:
+    main: src/mini_monsters.cr
 
 development_dependencies:
   ameba:

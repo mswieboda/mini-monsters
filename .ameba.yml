@@ -9,6 +9,6 @@ Lint/Formatting:
   Description: Reports not formatted sources
   FailOnError: false
   Excluded:
-  - src/game_sf_template/player.cr
+  - src/mini_monsters/player.cr
   Enabled: true
   Severity: Warning

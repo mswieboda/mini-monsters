@@ -1,4 +1,4 @@
-module GameSFTemplate
+module MiniMonsters
   class Font
     def self.default
       @@font_default ||= SF::Font.from_file("./assets/PressStart2P.ttf")
