@@ -4,7 +4,7 @@
 
 This game is being made for [Ludum Dare 56](https://ldjam.com/events/ludum-dare/56). Ludum Dare ([rules](https://ldjam.com/events/ludum-dare/rules)) is a 72 hour game jam.
 
-It's being made with the [crystal](https://crystal-lang.org/) programming langauge using C++ [SFML (Simple and Fast Multimedia Library)](https://www.sfml-dev.org/) via crystal bindings via [crsfml](https://github.com/oprypin/crsfml) and a wrapper and helper framework [game_sf](https://github.com/mswieboda/game_sf).
+It's being made with the [crystal](https://crystal-lang.org/) programming langauge using C++ [SFML](https://www.sfml-dev.org/) (Simple and Fast Multimedia Library) via [crystal](https://crystal-lang.org/) bindings via [crsfml](https://github.com/oprypin/crsfml) and a wrapper and helper framework [game_sf](https://github.com/mswieboda/game_sf).
 
 ## Installation
 
