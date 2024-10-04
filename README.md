@@ -8,7 +8,7 @@ It's being made with the [crystal](https://crystal-lang.org/) programming langau
 
 ## Installation
 
-## Windows
+### Windows
 
 if compiling/installing from Windows, in an `x64 Native Tools Command Prompt for VS 2019` command line (see [https://github.com/mswieboda/game_sf?tab=readme-ov-file#installation](game_sf) Windows Installation instructions) please first run:
 
@@ -27,7 +27,7 @@ win_shards_postinstall.bat
 to copy the specific Window crsfml v2.5.3 compiled files to this `lib/crsfml`
 
 
-## Mac or Linux
+### Mac or Linux
 
 [install SFML](https://github.com/oprypin/crsfml#install-sfml)
 
@@ -36,7 +36,9 @@ shards install
 ```
 
 
-### Linter
+## Linter
+
+only works on Mac or Linux since shards post install is skipped on Windows.
 
 ```
 bin/ameba
