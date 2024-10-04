@@ -2,33 +2,19 @@ module MiniMonsters
   class Player
     getter x : Int32 | Float32
     getter y : Int32 | Float32
-    getter animations
+    getter circle : SF::CircleShape
 
-    AnimationDuration = 125
     Size = 128
+    Radius = Size / 2
     Speed = 640
-    Sheet = "./assets/player.png"
 
-    def initialize(x = 0, y = 0)
-      # sprite size
-      @x = x
-      @y = y
+    def initialize(@x = 0, @y = 0)
+      @circle = SF::CircleShape.new(radius)
+      @circle.position = {x, y}
+    end
 
-      # init animations
-      # idle
-      idle = GSF::Animation.new(loops: false)
-      idle.add(Sheet, 0, 0, size, size)
-
-      # fire animation
-      fire_frames = 3
-      fire = GSF::Animation.new(loops: false)
-
-      fire_frames.times do |i|
-        fire.add(Sheet, i * size, 0, size, size, duration_ms: AnimationDuration)
-      end
-
-      @animations = GSF::Animations.new(:idle, idle)
-      animations.add(:fire, fire)
+    def radius
+      Radius
     end
 
     def size
@@ -36,8 +22,6 @@ module MiniMonsters
     end
 
     def update(frame_time, keys : Keys)
-      animations.update(frame_time)
-
       update_movement(frame_time, keys)
     end
 
@@ -45,10 +29,10 @@ module MiniMonsters
       dx = 0
       dy = 0
 
-      dy -= 1 if keys.pressed?([Keys::W])
-      dx -= 1 if keys.pressed?([Keys::A])
-      dy += 1 if keys.pressed?([Keys::S])
-      dx += 1 if keys.pressed?([Keys::D])
+      dy -= 1 if keys.pressed?(Keys::W)
+      dx -= 1 if keys.pressed?(Keys::A)
+      dy += 1 if keys.pressed?(Keys::S)
+      dx += 1 if keys.pressed?(Keys::D)
 
       return if dx == 0 && dy == 0
 
@@ -80,10 +64,12 @@ module MiniMonsters
     def move(dx, dy)
       @x += dx
       @y += dy
+
+      @circle.position = {x, y}
     end
 
     def draw(window : SF::RenderWindow)
-      animations.draw(window, x, y)
+      window.draw(circle)
     end
   end
 end
