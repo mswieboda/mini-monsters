@@ -1,8 +1,8 @@
 # Mini Monsters
 
-![Ludum Dare 56](https://img.shields.io/badge/LudumDare-56-f79122?labelColor=ee5533&link=https%3A%2F%2Fldjam.com%2Fevents%2Fludum-dare%2F56)
+[![Ludum Dare 56](https://img.shields.io/badge/LudumDare-56-f79122?labelColor=ee5533&link=https%3A%2F%2Fldjam.com%2Fevents%2Fludum-dare%2F56)](https://ldjam.com/events/ludum-dare/56)
 
-This game is being made for Ludum Dare 56. Ludum Dare is a 72 hour game jam.
+This game is being made for [Ludum Dare 56](https://ldjam.com/events/ludum-dare/56). Ludum Dare ([rules](https://ldjam.com/events/ludum-dare/rules)) is a 72 hour game jam.
 
 It's being made with the [crystal](https://crystal-lang.org/) programming langauge using C++ [SFML (Simple and Fast Multimedia Library)](https://www.sfml-dev.org/) via crystal bindings via [crsfml](https://github.com/oprypin/crsfml) and a wrapper and helper framework [game_sf](https://github.com/mswieboda/game_sf).
 
