@@ -19,13 +19,8 @@ class Rename
     "src/#{FileName}/scene/main.cr",
     "src/#{FileName}/scene/start.cr"
   ]
-  RenameFiles = [
-    "#{FileName}.exe",
-    "src/#{FileName}.cr"
-  ]
-  RenameDirectories = [
-    "src/#{FileName}"
-  ]
+  RenameFiles = ["src/#{FileName}.cr"]
+  RenameDirectories = ["src/#{FileName}"]
   ReadmeFile = "README.md"
 
   @class_name = ""
