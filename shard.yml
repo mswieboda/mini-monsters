@@ -1,0 +1,22 @@
+name: game_sf_template
+version: 0.1.7
+
+authors:
+  - Matt Swieboda <mswieboda@users.noreply.github.com>
+
+targets:
+  game_sf_template:
+    main: src/game_sf_template.cr
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+
+dependencies:
+  game_sf:
+    github: mswieboda/game_sf
+    version: 0.33.1
+
+crystal: '>= 1.13.3'
+
+license: MIT

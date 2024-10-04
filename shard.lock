@@ -1,0 +1,14 @@
+version: 2.0
+shards:
+  ameba:
+    git: https://github.com/crystal-ameba/ameba.git
+    version: 1.6.1
+
+  crsfml:
+    git: https://github.com/oprypin/crsfml.git
+    version: 2.5.3
+
+  game_sf:
+    git: https://github.com/mswieboda/game_sf.git
+    version: 0.33.1
+
