@@ -90,13 +90,13 @@ module MiniMonsters
       window.draw(sprite)
     end
 
-    def draw_visibility(window, row, col)
+    def draw_visibility(window, row, col, torch_left_percent)
       x = col * size
       y = row * size
 
       @visibilities.each do |vrow, visibilities|
         visibilities.each do |vcol, visibility|
-          visibility.draw(window, x + vcol * VisibilitySize, y + vrow * VisibilitySize, VisibilitySize)
+          visibility.draw(window, x + vcol * VisibilitySize, y + vrow * VisibilitySize, VisibilitySize, torch_left_percent)
         end
       end
     end

@@ -66,6 +66,10 @@ module MiniMonsters
       y + 38
     end
 
+    def torch_left_percent
+      @torch_duration_alpha / (TorchMaxAlpha - 1)
+    end
+
     def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height)
       update_movement_dx_input(keys, joysticks)
       update_movement_dy_input(keys, joysticks)

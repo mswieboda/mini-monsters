@@ -125,7 +125,7 @@ module MiniMonsters
     def draw_visibility(window)
       @tiles.each do |row, tiles|
         tiles.each do |col, tile|
-          tile.draw_visibility(window, row, col)
+          tile.draw_visibility(window, row, col, player.torch_left_percent)
         end
       end
 

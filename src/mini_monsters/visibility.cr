@@ -1,4 +1,7 @@
 module MiniMonsters
+  FogAlpha = 191
+  ColorFog = SF::Color.new(0, 0, 0, FogAlpha)
+
   enum Visibility : UInt8
     None
     Fog
@@ -7,9 +10,9 @@ module MiniMonsters
     def color
       case self
       when .none?
-        SF::Color.new(0, 0, 0)
+        SF::Color::Black
       when .fog?
-        SF::Color.new(0, 0, 0, 191)
+        ColorFog
       when .clear?
         SF::Color::Transparent
       else
@@ -18,13 +21,20 @@ module MiniMonsters
     end
 
     def explored?
-      self.fog? || self.clear?
+      fog? || clear?
     end
 
-    def draw(window, x, y, size)
+    def draw(window, x, y, size, torch_left_percent)
       rect = SF::RectangleShape.new({size, size})
-      rect.fill_color = color
       rect.position = {x, y}
+
+      if clear?
+        adj_color = color.dup
+        adj_color.a = FogAlpha - (torch_left_percent * (FogAlpha - adj_color.a)).to_i
+        rect.fill_color = adj_color
+      else
+        rect.fill_color = color
+      end
 
       window.draw(rect)
     end
