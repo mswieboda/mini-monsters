@@ -15,7 +15,7 @@ clean:
 	@mkdir ${BUILD_DIR}
 
 build_test:
-	${CC} ${SOURCE_FILES} -o ${OUT_FILE}_test.o --error-trace
+	${CC} ${SOURCE_FILES} -o ${OUT_FILE}_test.o --error-trace -p
 
 test: build_test
 	./${OUT_FILE}_test.o
