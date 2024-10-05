@@ -10,6 +10,7 @@ module MiniMonsters
     Size = 128
     Radius = Size / 2
     Speed = 640
+    VisibilityRadius = 256
 
     def initialize(@x = 0, @y = 0)
       @dx = 0
@@ -26,6 +27,18 @@ module MiniMonsters
 
     def size
       Size
+    end
+
+    def visibility_radius
+      VisibilityRadius
+    end
+
+    def center_x
+      x + size / 2
+    end
+
+    def center_y
+      y + size / 2
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height)
@@ -60,7 +73,6 @@ module MiniMonsters
 
       return if dx == 0 && dy == 0
 
-      @moved = true
       move(dx, dy)
     end
 
@@ -76,16 +88,14 @@ module MiniMonsters
     end
 
     def move(dx, dy)
-      @x += dx
-      @y += dy
-
-      @circle.position = {x, y}
+      jump(x + dx, y + dy)
     end
 
     def jump(x, y)
       @x = x
       @y = y
 
+      @moved = true
       @circle.position = {x, y}
     end
 

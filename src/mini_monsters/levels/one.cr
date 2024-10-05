@@ -16,16 +16,8 @@ module MiniMonsters::Levels
       @tile_rect.outline_thickness = -1
     end
 
-    def start
+    def player_jump_to_start
       player.jump_to_tile(9, 9, tile_size)
-
-      # init and add objs, enemies
-    end
-
-    def draw_tile(window, x, y)
-      @tile_rect.position = {x, y}
-
-      window.draw(@tile_rect)
     end
   end
 end
