@@ -7,7 +7,7 @@ module MiniMonsters
     getter? moved
     getter circle : SF::CircleShape
 
-    Size = 64
+    Size = 128
     Radius = Size / 2
     Speed = 640
 
@@ -90,10 +90,7 @@ module MiniMonsters
     end
 
     def jump_to_tile(col, row, tile_size)
-      jump(
-        col * tile_size + (tile_size / 2).to_f32,
-        row * tile_size + (tile_size / 2).to_f32
-      )
+      jump(col * tile_size, row * tile_size)
     end
 
     def draw(window : SF::RenderWindow)

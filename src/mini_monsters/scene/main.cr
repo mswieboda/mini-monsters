@@ -20,7 +20,7 @@ module MiniMonsters::Scene
     def init
       HUD.init
       level.start
-      # view_movement
+      view_movement
     end
 
     def update(frame_time, keys : Keys, mouse : Mouse, joysticks : Joysticks)
@@ -30,7 +30,7 @@ module MiniMonsters::Scene
       end
 
       level.update(frame_time, keys, joysticks)
-      # view_movement if player.moved?
+      view_movement if player.moved?
 
       HUD.update(frame_time)
     end
@@ -38,16 +38,17 @@ module MiniMonsters::Scene
     def view_movement
       view = Screen.view
 
-      cx = player.x
-      cy = player.y
-      w = Screen.width / 2 - CenteredViewPadding
-      h = Screen.height / 2 - CenteredViewPadding
+      cx = player.x + player.size / 2
+      cy = player.y + player.size / 2
 
-      cx = w if cx < w
-      cy = h if cy < h
-
-      cx = level.width - w if cx > level.width - w
-      cy = level.height - h if cy > level.height - h
+      # NOTE: this doesn't work for smaller level sizes
+      #       but leaving in for now in case we can modify it to work
+      # w = Screen.width / 2 - CenteredViewPadding
+      # h = Screen.height / 2 - CenteredViewPadding
+      # cx = w if cx < w
+      # cy = h if cy < h
+      # cx = level.width - w if cx > level.width - w
+      # cy = level.height - h if cy > level.height - h
 
       view.center = {cx, cy}
 
