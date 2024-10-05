@@ -78,8 +78,8 @@ module MiniMonsters
 
       min_row = (y / Tile.size).to_i - 1
       min_col = (x / Tile.size).to_i - 1
-      max_row = ((y + size) / Tile.size).ceil.to_i + 1
-      max_col = ((x + size) / Tile.size).ceil.to_i + 1
+      max_row = ((y + size) / Tile.size).ceil.to_i
+      max_col = ((x + size) / Tile.size).ceil.to_i
 
       # check these tiles against player visibility circle
       (min_row..max_row).each do |row|
