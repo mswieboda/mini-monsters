@@ -6,7 +6,6 @@ module MiniMonsters
     property? explored
 
     TileSize = 64 # should share with Level
-    Color = SF::Color.new(63, 63, 63)
 
     def initialize(@visibility = Visibility::None)
       @explored = false
@@ -62,12 +61,10 @@ module MiniMonsters
       Math.sqrt(dist_x ** 2 + dist_y ** 2) <= radius
     end
 
-    def draw(window, col, row)
-      rect = SF::RectangleShape.new({size, size})
-      rect.fill_color = Color
-      rect.position = {col * size, row * size}
+    def draw(window, col, row, sprite)
+      sprite.position = {col * size, row * size}
 
-      window.draw(rect)
+      window.draw(sprite)
     end
 
     def draw_visibility(window, col, row)

@@ -7,6 +7,7 @@ module MiniMonsters
     getter player : Player
     getter rows : Int32
     getter cols : Int32
+    getter tile_sprite : SF::Sprite
 
     @tiles : Tiles
 
@@ -14,6 +15,7 @@ module MiniMonsters
 
     def initialize(@player : Player, @rows = 9, @cols = 9)
       @tiles = Tiles.new
+      @tile_sprite = SF::Sprite.new
     end
 
     def tile_size
@@ -113,7 +115,7 @@ module MiniMonsters
     def draw_tiles(window)
       @tiles.each do |row, tiles|
         tiles.each do |col, tile|
-          tile.draw(window, col, row)
+          tile.draw(window, col, row, tile_sprite)
         end
       end
     end
