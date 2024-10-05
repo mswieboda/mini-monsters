@@ -5,20 +5,36 @@ module MiniMonsters
     getter dx : Int32 | Float32
     getter dy : Int32 | Float32
     getter? moved
-    getter circle : SF::CircleShape
+    getter animations : GSF::Animations
 
     Size = 128
     Radius = Size / 2
     Speed = 640
     VisibilityRadius = 256
+    SpriteWidth = 96
+    SpriteHeight = 128
+    Sheet = "./assets/sprites/player.png"
+    AnimationDuration = 125
 
     def initialize(@x = 0, @y = 0)
       @dx = 0
       @dy = 0
       @moved = false
 
-      @circle = SF::CircleShape.new(radius)
-      @circle.position = {x, y}
+      idle = GSF::Animation.new(loops: true)
+      idle.add(Sheet, 0, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
+
+      run_frames = 12
+      run = GSF::Animation.new(loops: true)
+
+      run_frames.times do |i|
+        run.add(Sheet, i * SpriteWidth, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
+      end
+
+      @animations = GSF::Animations.new(:idle_left, idle)
+      animations.add(:idle_right, idle, flip_horizontal: true)
+      animations.add(:run_left, run)
+      animations.add(:run_right, run, flip_horizontal: true)
     end
 
     def radius
@@ -45,6 +61,9 @@ module MiniMonsters
       update_movement_dx_input(keys, joysticks)
       update_movement_dy_input(keys, joysticks)
       update_movement(frame_time, level_width, level_height)
+
+      play_animation
+      animations.update(frame_time)
     end
 
     def update_movement_dx_input(keys, joysticks)
@@ -87,6 +106,15 @@ module MiniMonsters
       @dy = 0 if y + dy < 0 || y + size + dy > level_height
     end
 
+    def play_animation
+      # TODO: use run_right and idle_right too, based on last movement
+      if dx.abs > 0 || dy.abs > 0
+        animations.play(:run_left)
+      else
+        animations.play(:idle_left)
+      end
+    end
+
     def move(dx, dy)
       jump(x + dx, y + dy)
     end
@@ -96,7 +124,6 @@ module MiniMonsters
       @y = y
 
       @moved = true
-      @circle.position = {x, y}
     end
 
     def jump_to_tile(col, row, tile_size)
@@ -104,7 +131,7 @@ module MiniMonsters
     end
 
     def draw(window : SF::RenderWindow)
-      window.draw(circle)
+      animations.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2)
     end
   end
 end
