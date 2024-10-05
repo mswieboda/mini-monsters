@@ -9,7 +9,7 @@ module MiniMonsters
       when .none?
         SF::Color.new(0, 0, 0)
       when .fog?
-        SF::Color.new(0, 0, 0, 159)
+        SF::Color.new(0, 0, 0, 191)
       when .clear?
         SF::Color::Transparent
       else

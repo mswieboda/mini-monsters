@@ -43,13 +43,11 @@ module MiniMonsters
 
     def update_visibility(x, y, player)
       @visibilities.each do |row, visibilities|
-        visibilities.each do |col, visibility|
+        visibilities.each do |col, _visibility|
           vx = x + col * VisibilitySize
           vy = y + row * VisibilitySize
 
-          # puts ">>> update_visibility v: (#{vx}, #{vy}) p.c: (#{player.center_x}, #{player.center_y})"
-
-          if collision_with_circle?(vx, vy, VisibilitySize, player.center_x, player.center_y, player.visibility_radius)
+          if collision_with_circle?(vx, vy, VisibilitySize, player.torch_cx, player.torch_cy, player.visibility_radius)
             @visibilities[row][col] = Visibility::Clear
           end
         end

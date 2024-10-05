@@ -15,6 +15,11 @@ module MiniMonsters
     SpriteHeight = 128
     Sheet = "./assets/sprites/player.png"
     AnimationDuration = 42
+    TorchMaxAlpha = 32
+    TorchSegments = 8
+    TorchSegmentDuration = 5.seconds
+
+    @torch_duration_alpha : Int32
 
     def initialize(@x = 0, @y = 0)
       @dx = 0
@@ -35,6 +40,10 @@ module MiniMonsters
       animations.add(:idle_right, idle, flip_horizontal: true)
       animations.add(:run_left, run)
       animations.add(:run_right, run, flip_horizontal: true)
+
+      @torch_duration_alpha = TorchMaxAlpha - 1
+      @torch_segment_timer = Timer.new(TorchSegmentDuration)
+      @torch_segment_timer.start
     end
 
     def radius
@@ -49,21 +58,21 @@ module MiniMonsters
       VisibilityRadius
     end
 
-    def center_x
-      x + size / 2
+    def torch_cx
+      x + 12
     end
 
-    def center_y
-      y + size / 2
+    def torch_cy
+      y + 38
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height)
       update_movement_dx_input(keys, joysticks)
       update_movement_dy_input(keys, joysticks)
       update_movement(frame_time, level_width, level_height)
-
       play_animation
       animations.update(frame_time)
+      update_torch_segements
     end
 
     def update_movement_dx_input(keys, joysticks)
@@ -115,6 +124,18 @@ module MiniMonsters
       end
     end
 
+    def update_torch_segements
+      if @torch_segment_timer.done?
+        @torch_duration_alpha -= (TorchMaxAlpha / TorchSegments).to_i
+
+        if @torch_duration_alpha < 0
+          @torch_duration_alpha = 0
+        else
+          @torch_segment_timer.restart
+        end
+      end
+    end
+
     def move(dx, dy)
       jump(x + dx, y + dy)
     end
@@ -132,6 +153,23 @@ module MiniMonsters
 
     def draw(window : SF::RenderWindow)
       animations.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2)
+    end
+
+    def draw_torch_visibility(window : SF::RenderWindow)
+      circle = SF::CircleShape.new(radius)
+      circle.position = {torch_cx, torch_cy}
+      # alpha = 31
+      alpha = @torch_duration_alpha
+
+      [
+        {radius: 64, color: SF::Color.new(255, 170, 0, alpha)},
+        {radius: 32, color: SF::Color.new(255, 102, 0, alpha)}
+      ].each do |light|
+        circle.radius = light[:radius]
+        circle.origin = {light[:radius], light[:radius]}
+        circle.fill_color = light[:color]
+        window.draw(circle)
+      end
     end
   end
 end
