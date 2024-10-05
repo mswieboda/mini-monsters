@@ -9,12 +9,12 @@ module MiniMonsters
 
     Size = 128
     Radius = Size / 2
-    Speed = 640
+    Speed = 512
     VisibilityRadius = 256
     SpriteWidth = 96
     SpriteHeight = 128
     Sheet = "./assets/sprites/player.png"
-    AnimationDuration = 125
+    AnimationDuration = 42
 
     def initialize(@x = 0, @y = 0)
       @dx = 0
