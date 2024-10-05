@@ -18,6 +18,9 @@ module MiniMonsters
     TorchMaxAlpha = 32
     TorchSegments = 8
     TorchSegmentDuration = 5.seconds
+    MonsterRadiusMin = 96
+    MonsterRadiusMax = VisibilityRadius + 32
+    MonsterRadiusColor = SF::Color.new(255, 251, 0, 7)
 
     @torch_duration_alpha : Int32
 
@@ -68,6 +71,15 @@ module MiniMonsters
 
     def torch_left_percent
       @torch_duration_alpha / (TorchMaxAlpha - 1)
+    end
+
+    def monster_radius
+      MonsterRadiusMin + (torch_left_percent * (MonsterRadiusMax - MonsterRadiusMin)).to_i
+    end
+
+    def init
+      @torch_duration_alpha = TorchMaxAlpha - 1
+      @torch_segment_timer.start
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height)
@@ -134,6 +146,7 @@ module MiniMonsters
 
         if @torch_duration_alpha < 0
           @torch_duration_alpha = 0
+          @torch_segment_timer.stop
         else
           @torch_segment_timer.restart
         end
@@ -156,13 +169,22 @@ module MiniMonsters
     end
 
     def draw(window : SF::RenderWindow)
+      draw_monster_radius(window) if @torch_duration_alpha > 0
       animations.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2)
+    end
+
+    def draw_monster_radius(window : SF::RenderWindow)
+      circle = SF::CircleShape.new(monster_radius)
+      circle.origin = {monster_radius, monster_radius}
+      circle.position = {torch_cx, torch_cy}
+      circle.fill_color = MonsterRadiusColor
+
+      window.draw(circle)
     end
 
     def draw_torch_visibility(window : SF::RenderWindow)
       circle = SF::CircleShape.new(radius)
       circle.position = {torch_cx, torch_cy}
-      # alpha = 31
       alpha = @torch_duration_alpha
 
       [

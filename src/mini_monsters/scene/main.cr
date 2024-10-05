@@ -19,7 +19,8 @@ module MiniMonsters::Scene
 
     def init
       HUD.init
-      level.start
+      player.init
+      level.init
       view_movement
     end
 

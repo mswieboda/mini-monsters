@@ -37,7 +37,7 @@ module MiniMonsters
       {col * tile_size, row * tile_size}
     end
 
-    def start
+    def init
       init_tiles
       init_monsters
       player_jump_to_start
