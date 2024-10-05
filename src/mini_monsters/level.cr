@@ -1,4 +1,5 @@
 require "./tile"
+require "./monster"
 
 module MiniMonsters
   class Level
@@ -8,6 +9,7 @@ module MiniMonsters
     getter rows : Int32
     getter cols : Int32
     getter tile_sprite : SF::Sprite
+    getter monsters : Array(Monster)
 
     @tiles : Tiles
 
@@ -16,6 +18,7 @@ module MiniMonsters
     def initialize(@player : Player, @rows = 9, @cols = 9)
       @tiles = Tiles.new
       @tile_sprite = SF::Sprite.new
+      @monsters = [] of Monster
     end
 
     def tile_size
@@ -36,6 +39,7 @@ module MiniMonsters
 
     def start
       init_tiles
+      init_monsters
       reset_visibility
       player_jump_to_start
       update_visibility(player)
@@ -55,6 +59,9 @@ module MiniMonsters
           @tiles[row][col] = Tile.new
         end
       end
+    end
+
+    def init_monsters
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks)
@@ -107,6 +114,9 @@ module MiniMonsters
 
     def draw(window : SF::RenderWindow)
       draw_tiles(window)
+
+      monsters.each(&.draw(window))
+
       player.draw(window)
 
       draw_visibility(window)

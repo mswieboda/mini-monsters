@@ -17,5 +17,11 @@ module MiniMonsters::Levels
     def player_jump_to_start
       player.jump_to_tile(9, 9, tile_size)
     end
+
+    def init_monsters
+      @monsters << Monster.new(5 * tile_size, 3 * tile_size)
+      @monsters << Monster.new(7 * tile_size, 7 * tile_size)
+      @monsters << Monster.new(1 * tile_size, 5 * tile_size)
+    end
   end
 end
