@@ -2,8 +2,6 @@ require "../level"
 
 module MiniMonsters::Levels
   class One < MiniMonsters::Level
-
-    TileColor = SF::Color.new(63, 63, 63)
     TileSpriteFile = "./assets/tiles/dungeon_base.png"
 
     def initialize(player)
