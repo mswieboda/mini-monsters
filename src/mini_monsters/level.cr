@@ -40,7 +40,6 @@ module MiniMonsters
     def start
       init_tiles
       init_monsters
-      reset_visibility
       player_jump_to_start
       update_visibility(player)
     end
@@ -67,18 +66,7 @@ module MiniMonsters
     def update(frame_time, keys : Keys, joysticks : Joysticks)
       player.update(frame_time, keys, joysticks, width, height)
 
-      if player.moved?
-        reset_visibility
-        update_visibility(player)
-      end
-    end
-
-    def reset_visibility
-      @tiles.each do |_row, tiles|
-        tiles.each do |_col, tile|
-          tile.reset_visibility
-        end
-      end
+      update_visibility(player) if player.moved?
     end
 
     def update_visibility(player : Player)
@@ -87,10 +75,10 @@ module MiniMonsters
       y = player.center_y - player.visibility_radius
       size = player.visibility_radius * 2
 
-      min_row = (y / Tile.size).to_i
-      min_col = (x / Tile.size).to_i
-      max_row = ((y + size) / Tile.size).ceil.to_i
-      max_col = ((x + size) / Tile.size).ceil.to_i
+      min_row = (y / Tile.size).to_i - 1
+      min_col = (x / Tile.size).to_i - 1
+      max_row = ((y + size) / Tile.size).ceil.to_i + 1
+      max_col = ((x + size) / Tile.size).ceil.to_i + 1
 
       # check these tiles against player visibility circle
       (min_row..max_row).each do |row|
@@ -100,6 +88,7 @@ module MiniMonsters
           next unless @tiles[row].has_key?(col)
 
           if tile = @tiles[row][col]
+            tile.reset_visibility
             update_tile_visibility(tile, row, col, player)
           end
         end

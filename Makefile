@@ -21,10 +21,10 @@ test: build_test
 	./${OUT_FILE}_test.o
 
 ${OUT_FILE}.o:
-	${CC} ${SOURCE_FILES} -o ${OUT_FILE}.o --release --no-debug -p
+	${CC} ${SOURCE_FILES} -o ${OUT_FILE}.o --release --no-debug -p -O3
 
 ${OUT_FILE}.exe:
-	${CC} ${SOURCE_FILES} -o ${OUT_FILE}.exe --release --no-debug -p
+	${CC} ${SOURCE_FILES} -o ${OUT_FILE}.exe --release --no-debug -p -O3
 
 release: clean ${OUT_FILE}.o
 	./${OUT_FILE}.o
