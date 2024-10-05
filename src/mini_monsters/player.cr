@@ -143,7 +143,7 @@ module MiniMonsters
 
     def update_torch_segements
       if @torch_segment_timer.done?
-        @torch_duration_alpha -= (TorchMaxAlpha / TorchSegments).to_i
+        @torch_duration_alpha -= TorchMaxAlpha // TorchSegments
 
         if @torch_duration_alpha < 0
           @torch_duration_alpha = 0

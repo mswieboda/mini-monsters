@@ -1,25 +1,26 @@
-require "./tile"
+require "./tile_map"
+require "./visibility"
 require "./monster"
 
 module MiniMonsters
   class Level
-    alias Tiles = Hash(Int32, Hash(Int32, Tile))
-
     getter player : Player
     getter rows : Int32
     getter cols : Int32
-    getter tile_sprite : SF::Sprite
     getter monsters : Array(Monster)
 
-    @tiles : Tiles
+    @visibilities : Array(Visibility)
+    @tile_map : TileMap
 
     Debug = true
-    TileSize = 128
+    TileSize = 64
+    VisibilitySize = 16
+    VisibilitySizeFactor = TileSize // VisibilitySize
 
-    def initialize(@player : Player, @rows = 9, @cols = 9)
-      @tiles = Tiles.new
-      @tile_sprite = SF::Sprite.new
+    def initialize(@player : Player, @rows = 1, @cols = 1)
+      @tile_map = TileMap.new
       @monsters = [] of Monster
+      @visibilities = [] of Visibility
     end
 
     def tile_size
@@ -34,15 +35,16 @@ module MiniMonsters
       tile_size * rows
     end
 
-    def to_tile(col, row)
-      {col * tile_size, row * tile_size}
+    def v_cols
+      cols * VisibilitySizeFactor
     end
 
     def init
       init_tiles
+      init_visibilities
       init_monsters
       player_jump_to_start
-      update_visibility(player)
+      update_visibility
     end
 
     def player_jump_to_start
@@ -50,15 +52,11 @@ module MiniMonsters
     end
 
     def init_tiles
-      @tiles = Tiles.new
+    end
 
-      rows.times do |row|
-        @tiles[row] = Hash(Int32, Tile).new
-
-        cols.times do |col|
-          @tiles[row][col] = Tile.new
-        end
-      end
+    def init_visibilities
+      size = rows * VisibilitySizeFactor * v_cols
+      @visibilities = Array(Visibility).new(size: size, value: Visibility::None)
     end
 
     def init_monsters
@@ -67,46 +65,109 @@ module MiniMonsters
     def update(frame_time, keys : Keys, joysticks : Joysticks)
       player.update(frame_time, keys, joysticks, width, height)
 
-      update_visibility(player) if player.moved?
+      update_visibility if player.moved?
     end
 
-    def update_visibility(player : Player)
+    def reset_visibility(tile_row, tile_col)
+      visibility_indexes = visibility_indexes(tile_row, tile_col)
+
+      visibility_indexes.each do |i|
+        reset_visibility(i)
+      end
+    end
+
+    def reset_visibility(index)
+      if visibility = @visibilities[index]
+        return unless visibility.clear?
+        @visibilities[index] = Visibility::Fog
+      end
+    end
+
+    def update_visibility
       # get all tiles within rectangle of player visibility radius
-      x = player.torch_cx - player.visibility_radius
-      y = player.torch_cy - player.visibility_radius
+      pvx = player.torch_cx - player.visibility_radius
+      pvy = player.torch_cy - player.visibility_radius
       size = player.visibility_radius * 2
 
-      min_row = (y / Tile.size).to_i - 1
-      min_col = (x / Tile.size).to_i - 1
-      max_row = ((y + size) / Tile.size).ceil.to_i
-      max_col = ((x + size) / Tile.size).ceil.to_i
+      min_row = (pvy // tile_size - 1).clamp(0, rows - 1)
+      min_col = (pvx // tile_size - 1).clamp(0, cols - 1)
+      max_row = (((pvy + size) // tile_size) + 1).clamp(0, rows - 1)
+      max_col = (((pvx + size) // tile_size) + 1).clamp(0, cols - 1)
 
       # check these tiles against player visibility circle
-      (min_row..max_row).each do |row|
-        next unless @tiles.has_key?(row)
+      (min_row.to_i..max_row.to_i).each do |row|
+        (min_col.to_i..max_col.to_i).each do |col|
+          reset_visibility(row, col)
 
-        (min_col..max_col).each do |col|
-          next unless @tiles[row].has_key?(col)
+          next unless collision_with_circle?(col * tile_size, row * tile_size, tile_size)
 
-          if tile = @tiles[row][col]
-            tile.reset_visibility
-            update_tile_visibility(tile, row, col, player)
-          end
+          update_tile_visibility(row, col)
         end
       end
     end
 
-    def update_tile_visibility(tile, row, col, player)
-      x = col * tile.size
-      y = row * tile.size
+    def visibility_indexes(tile_row, tile_col) : Array(Int32)
+      factor = VisibilitySizeFactor
+      v_tiles = factor * factor
+      indexes = [] of Int32
 
-      if tile.collision_with_circle?(x, y, tile.size, player.torch_cx, player.torch_cy, player.visibility_radius)
-        tile.update_visibility(x, y, player)
+      factor.times do |v_row|
+        factor.times do |v_col|
+          indexes << tile_row * cols * v_tiles + v_row * (factor * cols) + tile_col * factor + v_col
+        end
+      end
+
+      indexes
+    end
+
+    def update_tile_visibility(tile_row, tile_col)
+      size = VisibilitySize
+      visibility_indexes = visibility_indexes(tile_row, tile_col)
+
+      visibility_indexes.each do |i|
+        row = i // v_cols
+        col = i % v_cols
+
+        if collision_with_circle?(col * size, row * size, size)
+          @visibilities[i] = Visibility::Clear
+        end
       end
     end
 
+    def collision_with_circle?(x, y, size)
+      cx, cy, radius = {player.torch_cx, player.torch_cy, player.visibility_radius}
+
+      # temporary variables to set edges for testing
+      test_x = cx
+      test_y = cy
+
+      # which edge is closest?
+      if cx < x
+        # test left edge
+        test_x = x
+      elsif cx > x + size
+        # right edge
+        test_x = x + size
+      end
+
+      if cy < y
+        # top edge
+        test_y = y
+      elsif cy > y + size
+        # bottom edge
+        test_y = y + size
+      end
+
+      # get distance from closest edges
+      dist_x = cx - test_x
+      dist_y = cy - test_y
+
+      # if distance is less than radius, it collides
+      Math.sqrt(dist_x ** 2 + dist_y ** 2) <= radius
+    end
+
     def draw(window : SF::RenderWindow)
-      draw_tiles(window)
+      window.draw(@tile_map)
 
       monsters.each(&.draw(window))
 
@@ -117,19 +178,14 @@ module MiniMonsters
       player.draw_monster_attack_radius(window) if Debug
     end
 
-    def draw_tiles(window)
-      @tiles.each do |row, tiles|
-        tiles.each do |col, tile|
-          tile.draw(window, row, col, tile_sprite)
-        end
-      end
-    end
-
     def draw_visibility(window)
-      @tiles.each do |row, tiles|
-        tiles.each do |col, tile|
-          tile.draw_visibility(window, row, col, player.torch_left_percent)
-        end
+      @visibilities.each_with_index do |visibility, i|
+        row = i // v_cols
+        col = i % v_cols
+        vx = col * VisibilitySize
+        vy = row * VisibilitySize
+
+        visibility.draw(window, vx, vy, VisibilitySize, player.torch_left_percent)
       end
 
       player.draw_torch_visibility(window)
