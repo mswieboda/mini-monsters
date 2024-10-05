@@ -83,8 +83,8 @@ module MiniMonsters
 
     def update_visibility(player : Player)
       # get all tiles within rectangle of player visibility radius
-      x = player.x - player.visibility_radius
-      y = player.y - player.visibility_radius
+      x = player.center_x - player.visibility_radius
+      y = player.center_y - player.visibility_radius
       size = player.visibility_radius * 2
 
       min_row = (y / Tile.size).to_i
@@ -100,15 +100,18 @@ module MiniMonsters
           next unless @tiles[row].has_key?(col)
 
           if tile = @tiles[row][col]
-            explore_tile_check(tile, row, col, player)
+            update_tile_visibility(tile, row, col, player)
           end
         end
       end
     end
 
-    def explore_tile_check(tile, row, col, player)
-      if tile.collision_with_circle?(row, col, player.center_x, player.center_y, player.visibility_radius)
-        tile.explore
+    def update_tile_visibility(tile, row, col, player)
+      x = col * tile.size
+      y = row * tile.size
+
+      if tile.collision_with_circle?(x, y, tile.size, player.center_x, player.center_y, player.visibility_radius)
+        tile.update_visibility(x, y, player)
       end
     end
 
@@ -125,7 +128,7 @@ module MiniMonsters
     def draw_tiles(window)
       @tiles.each do |row, tiles|
         tiles.each do |col, tile|
-          tile.draw(window, col, row, tile_sprite)
+          tile.draw(window, row, col, tile_sprite)
         end
       end
     end
@@ -133,7 +136,7 @@ module MiniMonsters
     def draw_visibility(window)
       @tiles.each do |row, tiles|
         tiles.each do |col, tile|
-          tile.draw_visibility(window, col, row)
+          tile.draw_visibility(window, row, col)
         end
       end
     end

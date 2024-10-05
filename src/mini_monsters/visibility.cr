@@ -17,6 +17,10 @@ module MiniMonsters
       end
     end
 
+    def explored?
+      self.fog? || self.clear?
+    end
+
     def draw(window, x, y, size)
       rect = SF::RectangleShape.new({size, size})
       rect.fill_color = color

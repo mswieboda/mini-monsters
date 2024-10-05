@@ -2,13 +2,25 @@ require "./visibility"
 
 module MiniMonsters
   class Tile
-    property visibility : Visibility
+    alias Visibilities = Hash(Int32, Hash(Int32, Visibility))
+    property visibilities : Visibilities
     property? explored
 
     TileSize = 64 # should share with Level
+    VisibilityFactor = 4
+    VisibilitySize = (TileSize / VisibilityFactor).to_i
 
-    def initialize(@visibility = Visibility::None)
+    def initialize
       @explored = false
+      @visibilities = Visibilities.new
+
+      VisibilityFactor.times do |row|
+        @visibilities[row] = Hash(Int32, Visibility).new
+
+        VisibilityFactor.times do |col|
+          @visibilities[row][col] = Visibility::None
+        end
+      end
     end
 
     def self.size
@@ -20,18 +32,31 @@ module MiniMonsters
     end
 
     def reset_visibility
-      @visibility = Visibility::None
+      @visibilities.each do |row, visibilities|
+        visibilities.each do |col, visibility|
+          next unless visibility.clear?
+
+          @visibilities[row][col] = Visibility::Fog
+        end
+      end
     end
 
-    def explore
-      @explored = true
-      @visibility = Visibility::Clear
+    def update_visibility(x, y, player)
+      @visibilities.each do |row, visibilities|
+        visibilities.each do |col, visibility|
+          vx = x + col * VisibilitySize
+          vy = y + row * VisibilitySize
+
+          # puts ">>> update_visibility v: (#{vx}, #{vy}) p.c: (#{player.center_x}, #{player.center_y})"
+
+          if collision_with_circle?(vx, vy, VisibilitySize, player.center_x, player.center_y, player.visibility_radius)
+            @visibilities[row][col] = Visibility::Clear
+          end
+        end
+      end
     end
 
-    def collision_with_circle?(row, col, cx, cy, radius)
-      x = col * size
-      y = row * size
-
+    def collision_with_circle?(x, y, size, cx, cy, radius)
       # temporary variables to set edges for testing
       test_x = cx
       test_y = cy
@@ -61,15 +86,21 @@ module MiniMonsters
       Math.sqrt(dist_x ** 2 + dist_y ** 2) <= radius
     end
 
-    def draw(window, col, row, sprite)
+    def draw(window, row, col, sprite)
       sprite.position = {col * size, row * size}
 
       window.draw(sprite)
     end
 
-    def draw_visibility(window, col, row)
-      visibility = @visibility.none? && explored? ? Visibility::Fog : @visibility
-      visibility.draw(window, col * size, row * size, size)
+    def draw_visibility(window, row, col)
+      x = col * size
+      y = row * size
+
+      @visibilities.each do |vrow, visibilities|
+        visibilities.each do |vcol, visibility|
+          visibility.draw(window, x + vcol * VisibilitySize, y + vrow * VisibilitySize, VisibilitySize)
+        end
+      end
     end
   end
 end
