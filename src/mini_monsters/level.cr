@@ -13,7 +13,8 @@ module MiniMonsters
 
     @tiles : Tiles
 
-    TileSize = 64
+    Debug = true
+    TileSize = 128
 
     def initialize(@player : Player, @rows = 9, @cols = 9)
       @tiles = Tiles.new
@@ -112,6 +113,8 @@ module MiniMonsters
       player.draw(window)
 
       draw_visibility(window)
+
+      player.draw_monster_attack_radius(window) if Debug
     end
 
     def draw_tiles(window)

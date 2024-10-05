@@ -10,7 +10,7 @@ module MiniMonsters
     Size = 128
     Radius = Size / 2
     Speed = 512
-    VisibilityRadius = 256
+    VisibilityRadius = 512
     SpriteWidth = 96
     SpriteHeight = 128
     Sheet = "./assets/sprites/player.png"
@@ -19,8 +19,9 @@ module MiniMonsters
     TorchSegments = 8
     TorchSegmentDuration = 5.seconds
     MonsterRadiusMin = 96
-    MonsterRadiusMax = VisibilityRadius + 32
+    MonsterRadiusMax = 256
     MonsterRadiusColor = SF::Color.new(255, 251, 0, 7)
+    MonsterAttackRadius = VisibilityRadius - 128
 
     @torch_duration_alpha : Int32
 
@@ -173,28 +174,31 @@ module MiniMonsters
       animations.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2)
     end
 
-    def draw_monster_radius(window : SF::RenderWindow)
-      circle = SF::CircleShape.new(monster_radius)
-      circle.origin = {monster_radius, monster_radius}
+    def draw_circle_from_torch(window, radius, color)
+      circle = SF::CircleShape.new(radius)
+      circle.origin = {radius, radius}
       circle.position = {torch_cx, torch_cy}
-      circle.fill_color = MonsterRadiusColor
+      circle.fill_color = color
 
       window.draw(circle)
     end
 
+    def draw_monster_attack_radius(window : SF::RenderWindow)
+      draw_circle_from_torch(window, MonsterAttackRadius, SF::Color.new(255, 0, 255, 7))
+    end
+
+    def draw_monster_radius(window : SF::RenderWindow)
+      draw_circle_from_torch(window, monster_radius, MonsterRadiusColor)
+    end
+
     def draw_torch_visibility(window : SF::RenderWindow)
-      circle = SF::CircleShape.new(radius)
-      circle.position = {torch_cx, torch_cy}
       alpha = @torch_duration_alpha
 
       [
         {radius: 64, color: SF::Color.new(255, 170, 0, alpha)},
         {radius: 32, color: SF::Color.new(255, 102, 0, alpha)}
       ].each do |light|
-        circle.radius = light[:radius]
-        circle.origin = {light[:radius], light[:radius]}
-        circle.fill_color = light[:color]
-        window.draw(circle)
+        draw_circle_from_torch(window, light[:radius], light[:color])
       end
     end
   end

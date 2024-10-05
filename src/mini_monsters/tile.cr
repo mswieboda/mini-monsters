@@ -6,7 +6,7 @@ module MiniMonsters
     property visibilities : Visibilities
     property? explored
 
-    TileSize = 64 # should share with Level
+    TileSize = 128 # should share with Level
     VisibilityFactor = 4
     VisibilitySize = (TileSize / VisibilityFactor).to_i
 
