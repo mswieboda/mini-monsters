@@ -1,4 +1,5 @@
 require "./box"
+require "./circle"
 
 module MiniMonsters
   class Movable
@@ -7,9 +8,10 @@ module MiniMonsters
     getter dx : Int32 | Float32
     getter dy : Int32 | Float32
     getter? moved
-    getter collision_box : Box
+    getter collision_circle : Circle
 
     Size = 64
+    Radius = Size // 2
     Speed = 256
 
     def initialize(row = 0, col = 0)
@@ -18,7 +20,7 @@ module MiniMonsters
       @dx = 0
       @dy = 0
       @moved = false
-      @collision_box = Box.new(collision_box_size)
+      @collision_circle = Circle.new(collision_radius)
 
       jump_to_tile(row, col)
     end
@@ -31,24 +33,32 @@ module MiniMonsters
       Speed
     end
 
-    def collision_box_size
-      size
+    def collision_radius
+      Radius
     end
 
     def cx
-      x + Size // 2
+      x + collision_radius
     end
 
     def cy
-      y + Size // 2
+      y + collision_radius
     end
 
-    def collision_box_x
+    def collision_x
       x
     end
 
-    def collision_box_y
+    def collision_y
       y
+    end
+
+    def collision_cx
+      collision_x + collision_radius
+    end
+
+    def collision_cy
+      collision_y + collision_radius
     end
 
     def update_movement(frame_time, level_width = 0, level_height = 0, collidable_tiles = [] of TileData)
@@ -74,11 +84,11 @@ module MiniMonsters
 
     def move_with_level(level_width, level_height)
       if level_width > 0
-        @dx = 0 if collision_box_x + dx < 0 || collision_box_x + collision_box.size + dx > level_width
+        @dx = 0 if collision_x + dx < 0 || collision_cx + collision_radius + dx > level_width
       end
 
       if level_height > 0
-        @dy = 0 if collision_box_y + dy < 0 || collision_box_y + collision_box.size + dy > level_height
+        @dy = 0 if collision_y + dy < 0 || collision_cy + collision_radius + dy > level_height
       end
     end
 
@@ -117,8 +127,20 @@ module MiniMonsters
       jump(col * TileSize, row * TileSize)
     end
 
-    def collides?(dx, dy, other : Box, other_x, other_y)
-      collision_box.collides?(collision_box_x + dx, collision_box_y + dy, other, other_x, other_y)
+    def collides?(movable : Movable)
+      collides?(movable.collision_circle, movable.collision_cx, movable.collision_cy)
+    end
+
+    def collides?(circle : Circle, cx, cy)
+      collision_circle.collides?(collision_cx, collision_cy, circle, cx, cy)
+    end
+
+    def collides?(dx, dy, box : Box, box_x, box_y)
+      collision_circle.collides?(collision_cx + dx, collision_cy + dy, box, box_x, box_y)
+    end
+
+    def collides?(dx, dy, circle : Circle, circle_cx, circle_cy)
+      collision_circle.collides?(collision_cx + dx, collision_cy + dy, circle, circle_cx, circle_cy)
     end
 
     def draw(window : SF::RenderWindow)

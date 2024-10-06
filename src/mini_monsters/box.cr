@@ -1,3 +1,5 @@
+require "./math_helpers"
+
 module MiniMonsters
   struct Box
     property size : Int32
@@ -5,8 +7,8 @@ module MiniMonsters
     def initialize(@size)
     end
 
-    # Box (size, x, y) with circle (cx, cy, radius)
-    def self.collides?(size, x, y, cx, cy, radius)
+    # Box (size, x, y) with Circle (radius, cx, cy)
+    def self.collides?(size, x, y, radius, cx, cy)
       # temporary variables to set edges for testing
       test_x = cx
       test_y = cy
@@ -29,11 +31,8 @@ module MiniMonsters
       end
 
       # get distance from closest edges
-      dist_x = cx - test_x
-      dist_y = cy - test_y
-
       # if distance is less than radius, it collides
-      Math.sqrt(dist_x ** 2 + dist_y ** 2) <= radius
+      MathHelpers.distance(test_x, test_y, cx, cy) <= radius
     end
 
     # with other Box
@@ -56,8 +55,8 @@ module MiniMonsters
     end
 
     # with circle (cx, cy, radius)
-    def collides?(x, y, cx, cy, radius)
-      self.class.collides?(size, x, y, cx, cy, radius)
+    def collides?(x, y, circle : Circle, cx, cy)
+      self.class.collides?(size, x, y, circle.radius, cx, cy)
     end
 
     def draw(window : SF::RenderWindow, x, y)

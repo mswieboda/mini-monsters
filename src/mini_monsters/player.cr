@@ -18,9 +18,9 @@ module MiniMonsters
     MonsterRadiusMax = 256
     MonsterRadiusColor = SF::Color.new(255, 251, 0, 7)
     MonsterFollowRadius = VisibilityRadius - 128
-    CollisionBoxSize = 40
-    CollisionBoxXOffset = 24
-    CollisionBoxYOffset = 96
+    CollisionRadius = 24
+    CollisionXOffset = 24
+    CollisionYOffset = 96
 
     @torch_duration_alpha : Int32
 
@@ -55,16 +55,24 @@ module MiniMonsters
       Speed
     end
 
-    def collision_box_size
-      CollisionBoxSize
+    def collision_radius
+      CollisionRadius
     end
 
-    def collision_box_x
-      x + CollisionBoxXOffset
+    def cx
+      x + Size // 2
     end
 
-    def collision_box_y
-      y + CollisionBoxYOffset
+    def cy
+      y + Size // 2
+    end
+
+    def collision_x
+      x + CollisionXOffset
+    end
+
+    def collision_y
+      y + CollisionYOffset
     end
 
     def visibility_radius
@@ -142,8 +150,8 @@ module MiniMonsters
     end
 
     def jump_to_tile(row, col)
-      x = col * TileSize + TileSize // 2 - CollisionBoxXOffset - collision_box.size // 2
-      y = row * TileSize + TileSize // 2 - CollisionBoxYOffset - collision_box.size // 2
+      x = col * TileSize + TileSize // 2 - CollisionXOffset - collision_radius
+      y = row * TileSize + TileSize // 2 - CollisionYOffset - collision_radius
 
       jump(x, y)
     end
@@ -165,7 +173,7 @@ module MiniMonsters
 
       window.draw(rectangle)
 
-      collision_box.draw(window, collision_box_x, collision_box_y)
+      collision_circle.draw(window, collision_cx, collision_cy)
     end
 
     def draw_circle_from_torch(window, radius, color)

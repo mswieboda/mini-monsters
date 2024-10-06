@@ -113,14 +113,16 @@ module MiniMonsters
 
       return tiles unless movable.moved?
 
-      size = movable.collision_box.size
-      x = movable.collision_box_x - size / 2
-      y = movable.collision_box_y - size / 2
+      size = movable.collision_radius * 2
+      lx = movable.collision_cx - size
+      ly = movable.collision_cy - size
+      rx = movable.collision_cx + size
+      ry = movable.collision_cy + size
 
-      min_row = (y // tile_size - 1).clamp(0, rows - 1).to_i
-      min_col = (x // tile_size - 1).clamp(0, cols - 1).to_i
-      max_row = (((y + size * 2) // tile_size) + 1).clamp(0, rows - 1).to_i
-      max_col = (((x + size * 2) // tile_size) + 1).clamp(0, cols - 1).to_i
+      min_row = (ly // tile_size - 1).clamp(0, rows - 1).to_i
+      min_col = (lx // tile_size - 1).clamp(0, cols - 1).to_i
+      max_row = (ry // tile_size + 1).clamp(0, rows - 1).to_i
+      max_col = (rx // tile_size + 1).clamp(0, cols - 1).to_i
 
       @tiles[min_row..max_row].each_with_index do |cols, row_index|
         row = min_row + row_index
@@ -219,7 +221,7 @@ module MiniMonsters
     end
 
     def collision_with_circle?(x, y, size)
-      Box.collides?(size, x, y, player.torch_cx, player.torch_cy, player.visibility_radius)
+      Box.collides?(size, x, y, player.visibility_radius, player.torch_cx, player.torch_cy)
     end
 
     def draw(window : SF::RenderWindow)

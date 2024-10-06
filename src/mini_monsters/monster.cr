@@ -19,12 +19,12 @@ module MiniMonsters
     def follow_range?(player : Player)
       # more efficient guards before doing box/circle collision detection
       return false if following?
-      return false if x + size < player.torch_cx - player.monster_follow_radius - player.size * 2
-      return false if x > player.torch_cx + player.monster_follow_radius + player.size * 2
-      return false if y + size < player.torch_cy - player.monster_follow_radius - player.size * 2
-      return false if y > player.torch_cy + player.monster_follow_radius + player.size * 2
+      return false if cx < player.torch_cx - player.monster_follow_radius - player.size * 2
+      return false if cx > player.torch_cx + player.monster_follow_radius + player.size * 2
+      return false if cy < player.torch_cy - player.monster_follow_radius - player.size * 2
+      return false if cy > player.torch_cy + player.monster_follow_radius + player.size * 2
 
-      collision_box.collides?(x, y, player.torch_cx, player.torch_cy, player.monster_follow_radius)
+      collides?(Circle.new(player.monster_follow_radius), player.torch_cx, player.torch_cy)
     end
 
     def follow_player!
@@ -67,7 +67,7 @@ module MiniMonsters
 
       return unless Debug
 
-      collision_box.draw(window, x, y)
+      collision_circle.draw(window, collision_cx, collision_cy)
     end
   end
 end
