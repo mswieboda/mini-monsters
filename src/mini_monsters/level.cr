@@ -35,6 +35,10 @@ module MiniMonsters
       tile_size * rows
     end
 
+    def v_rows
+      rows * VisibilitySizeFactor
+    end
+
     def v_cols
       cols * VisibilitySizeFactor
     end
@@ -175,20 +179,26 @@ module MiniMonsters
 
       draw_visibility(window)
 
+      player.draw_torch_visibility(window)
       player.draw_monster_attack_radius(window) if Debug
     end
 
     def draw_visibility(window)
-      @visibilities.each_with_index do |visibility, i|
-        row = i // v_cols
-        col = i % v_cols
-        vx = col * VisibilitySize
-        vy = row * VisibilitySize
+      min_row = (Screen.y // VisibilitySize).clamp(0, v_rows - 1)
+      min_col = (Screen.x // VisibilitySize).clamp(0, v_cols - 1)
+      max_row = (((Screen.y + Screen.height) // VisibilitySize) + 1).clamp(0, v_rows - 1)
+      max_col = (((Screen.x + Screen.width) // VisibilitySize) + 1).clamp(0, v_cols - 1)
 
-        visibility.draw(window, vx, vy, VisibilitySize, player.torch_left_percent)
+      (min_row.to_i..max_row.to_i).each do |row|
+        (min_col.to_i..max_col.to_i).each do |col|
+          if visibility = @visibilities[row * v_cols + col]
+            vx = col * VisibilitySize
+            vy = row * VisibilitySize
+
+            visibility.draw(window, vx, vy, VisibilitySize, player.torch_left_percent)
+          end
+        end
       end
-
-      player.draw_torch_visibility(window)
     end
   end
 end

@@ -5,7 +5,7 @@ module MiniMonsters::Levels
     TileSheet = "./assets/tiles/dungeon_base.png"
 
     def initialize(player)
-      super(player, rows: 19, cols: 29)
+      super(player, rows: 59, cols: 59)
     end
 
     def player_jump_to_start
