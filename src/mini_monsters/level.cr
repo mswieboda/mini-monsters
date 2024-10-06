@@ -11,14 +11,14 @@ module MiniMonsters
     getter player : Player
     getter rows : Int32
     getter cols : Int32
+    getter tiles : Array(Array(Int32))
     getter monsters : Array(Monster)
 
     @visibilities : Array(Visibility)
     @tile_map : TileMap
     @collidable_tile_types : Array(Int32)
+    @collidable_tiles : Array(TileData)
 
-    Debug = true
-    TileSize = 64
     VisibilitySize = 16
     VisibilitySizeFactor = TileSize // VisibilitySize
     EmptyString = ""
@@ -27,9 +27,11 @@ module MiniMonsters
 
     def initialize(@player : Player, @rows = 1, @cols = 1)
       @tile_map = TileMap.new
+      @tiles = [] of Array(Int32)
       @monsters = [] of Monster
       @visibilities = [] of Visibility
       @collidable_tile_types = [] of Int32
+      @collidable_tiles = [] of TileData
     end
 
     def tile_size
@@ -81,6 +83,7 @@ module MiniMonsters
       # tile data is 1-indexed not 0-indexed so subtract 1
       tiles = json["data"].as_a.map { |j| j.as_i - 1 }
       @tile_map = TileMap.new(tile_sheet_file, tile_size, tiles, rows, cols)
+      @tiles = tiles.in_slices_of(cols)
 
       # player_start_row and player_start_row are 0-indexed
       player.jump_to_tile(json["player_start_row"].as_i, json["player_start_col"].as_i, tile_size)
@@ -108,25 +111,38 @@ module MiniMonsters
     def init_monsters
     end
 
-    # TODO: optimize this method, so we don't return all tiles!!!
     def collidable_tiles : Tiles
-      @tile_map.tiles.map_with_index do |tile, i|
-        row = i // cols
-        col = i % cols
-        {tile, row, col}
-      end.select do |tile, _row, _col|
-        # TODO: this part was wrong, wasn't doing it correctly
-        # next false unless @collidable_tile_types.includes?(tile)
+      collidable_tiles = [] of TileData
 
-        # row >= player.collision_box_x // rows && row <= player.collision_box_x + player.collision_box.size &&
-        #   col >= player.collision_box_y // cols && player.collision_box_y + player.collision_box.size
+      px = player.collision_box_x - player.collision_box.size / 2
+      py = player.collision_box_y - player.collision_box.size / 2
+      size = player.collision_box.size * 2
 
-        @collidable_tile_types.includes?(tile)
+      min_row = (py // tile_size - 1).clamp(0, rows - 1).to_i
+      min_col = (px // tile_size - 1).clamp(0, cols - 1).to_i
+      max_row = (((py + size) // tile_size) + 1).clamp(0, rows - 1).to_i
+      max_col = (((px + size) // tile_size) + 1).clamp(0, cols - 1).to_i
+
+      # check these tiles against player visibility circle
+      @tiles[min_row..max_row].each_with_index do |cols, row_index|
+        row = min_row + row_index
+
+        cols[min_col..max_col].each_with_index do |tile, col_index|
+          col = min_col + col_index
+
+          next unless @collidable_tile_types.includes?(tile)
+
+          collidable_tiles << {tile, row, col}
+        end
       end
+
+      collidable_tiles
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks)
-      player.update(frame_time, keys, joysticks, width, height, collidable_tiles, tile_size)
+      @collidable_tiles = collidable_tiles if player.moved?
+
+      player.update(frame_time, keys, joysticks, width, height, @collidable_tiles, tile_size)
 
       update_visibility if player.moved?
     end
@@ -239,7 +255,24 @@ module MiniMonsters
       draw_visibility(window)
 
       player.draw_torch_visibility(window)
-      player.draw_monster_attack_radius(window) if Debug
+
+      return unless Debug
+
+      draw_collision_tiles(window)
+      player.draw_monster_attack_radius(window)
+    end
+
+    def draw_collision_tiles(window)
+      rectangle = SF::RectangleShape.new({tile_size, tile_size})
+      rectangle.fill_color = SF::Color::Transparent
+      rectangle.outline_color = SF::Color::Cyan
+      rectangle.outline_thickness = 2
+
+      @collidable_tiles.each do |_tile, row, col|
+        rectangle.position = {col * tile_size, row * tile_size}
+
+        window.draw(rectangle)
+      end
     end
 
     def draw_visibility(window)

@@ -2,20 +2,15 @@ module MiniMonsters
   class TileMap
     include SF::Drawable
 
-    getter tiles : Array(Int32)
-
     @texture : SF::Texture
     @vertices : SF::VertexArray
 
     def initialize()
       @texture = SF::Texture.new
       @vertices = SF::VertexArray.new(SF::Quads)
-      @tiles = [] of Int32
     end
 
     def initialize(texture_file : String, tile_size : Int32, tiles, rows : Int32, columns : Int32)
-      @tiles = tiles
-
       size = SF.vector2(tile_size, tile_size)
 
       # load the tileset texture

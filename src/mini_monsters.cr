@@ -9,5 +9,8 @@ module MiniMonsters
   alias Screen = GSF::Screen
   alias Timer = GSF::Timer
 
+  TileSize = 64
+  Debug = false
+
   Game.new.run
 end

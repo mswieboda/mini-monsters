@@ -217,12 +217,13 @@ module MiniMonsters
 
     def draw(window : SF::RenderWindow)
       draw_monster_radius(window) if @torch_duration_alpha > 0
+
       animations.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2)
-      collision_box.draw(window, collision_box_x, collision_box_y)
-      draw_player_border(window)
+
+      draw_player_borders(window) if Debug
     end
 
-    def draw_player_border(window)
+    def draw_player_borders(window)
       rectangle = SF::RectangleShape.new({size, size})
       rectangle.position = {x, y}
       rectangle.fill_color = SF::Color::Transparent
@@ -230,6 +231,8 @@ module MiniMonsters
       rectangle.outline_thickness = 2
 
       window.draw(rectangle)
+
+      collision_box.draw(window, collision_box_x, collision_box_y)
     end
 
     def draw_circle_from_torch(window, radius, color)
