@@ -108,17 +108,19 @@ module MiniMonsters
     def init_monsters
     end
 
-    def player_collidable_tiles : Tiles
-      collidable_tiles = [] of TileData
+    def collidable_tiles(movable : Movable)
+      tiles = [] of TileData
 
-      px = player.collision_box_x - player.collision_box.size / 2
-      py = player.collision_box_y - player.collision_box.size / 2
-      size = player.collision_box.size * 2
+      return tiles unless movable.moved?
 
-      min_row = (py // tile_size - 1).clamp(0, rows - 1).to_i
-      min_col = (px // tile_size - 1).clamp(0, cols - 1).to_i
-      max_row = (((py + size) // tile_size) + 1).clamp(0, rows - 1).to_i
-      max_col = (((px + size) // tile_size) + 1).clamp(0, cols - 1).to_i
+      size = movable.collision_box.size
+      x = movable.collision_box_x - size / 2
+      y = movable.collision_box_y - size / 2
+
+      min_row = (y // tile_size - 1).clamp(0, rows - 1).to_i
+      min_col = (x // tile_size - 1).clamp(0, cols - 1).to_i
+      max_row = (((y + size * 2) // tile_size) + 1).clamp(0, rows - 1).to_i
+      max_col = (((x + size * 2) // tile_size) + 1).clamp(0, cols - 1).to_i
 
       @tiles[min_row..max_row].each_with_index do |cols, row_index|
         row = min_row + row_index
@@ -128,16 +130,16 @@ module MiniMonsters
 
           next unless @collidable_tile_types.includes?(tile)
 
-          collidable_tiles << {tile, row, col}
+          tiles << {tile, row, col}
         end
       end
 
-      collidable_tiles
+      tiles
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks)
       if player.moved?
-        @player_collidable_tiles = player_collidable_tiles
+        @player_collidable_tiles = collidable_tiles(player)
 
         @monsters
           .select(&.follow_range?(player))
@@ -146,9 +148,11 @@ module MiniMonsters
 
       player.update(frame_time, keys, joysticks, width, height, @player_collidable_tiles)
 
-      monsters
-        .select(&.following?)
-        .each(&.update_following(frame_time, player.cx, player.cy, player.monster_radius))
+      monsters.select(&.following?).each do |monster|
+        collidable_tiles = collidable_tiles(monster)
+
+        monster.update_following(frame_time, player.cx, player.cy, player.monster_radius, collidable_tiles)
+      end
 
       update_visibility if player.moved?
     end
