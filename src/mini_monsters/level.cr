@@ -5,8 +5,9 @@ require "./monster"
 
 module MiniMonsters
   class Level
-    alias TileData = Tuple(Int32, Int32, Int32)
-    alias Tiles = Array(TileData) # tile_type, row, col
+    alias TileData = Tuple(Int32, Int32, Int32) # tile_type, row, col
+    alias VisibilityData = Tuple(Visibility, Int32, Int32) # v, row, col
+    alias Tiles = Array(TileData)
 
     getter player : Player
     getter rows : Int32
@@ -14,7 +15,7 @@ module MiniMonsters
     getter tiles : Array(Array(Int32))
     getter monsters : Array(Monster)
 
-    @visibilities : Array(Visibility)
+    @visibilities : Array(Array(Visibility))
     @tile_map : TileMap
     @collidable_tile_types : Array(Int32)
     @collidable_tiles : Array(TileData)
@@ -29,7 +30,7 @@ module MiniMonsters
       @tile_map = TileMap.new
       @tiles = [] of Array(Int32)
       @monsters = [] of Monster
-      @visibilities = [] of Visibility
+      @visibilities = [] of Array(Visibility)
       @collidable_tile_types = [] of Int32
       @collidable_tiles = [] of TileData
     end
@@ -104,8 +105,8 @@ module MiniMonsters
     end
 
     def init_visibilities
-      size = rows * VisibilitySizeFactor * v_cols
-      @visibilities = Array(Visibility).new(size: size, value: Visibility::None)
+      visibilities_flat = Array(Visibility).new(size: v_rows * v_cols, value: Visibility::None)
+      @visibilities = visibilities_flat.in_slices_of(v_cols)
     end
 
     def init_monsters
@@ -123,7 +124,6 @@ module MiniMonsters
       max_row = (((py + size) // tile_size) + 1).clamp(0, rows - 1).to_i
       max_col = (((px + size) // tile_size) + 1).clamp(0, cols - 1).to_i
 
-      # check these tiles against player visibility circle
       @tiles[min_row..max_row].each_with_index do |cols, row_index|
         row = min_row + row_index
 
@@ -148,17 +148,9 @@ module MiniMonsters
     end
 
     def reset_visibility(tile_row, tile_col)
-      visibility_indexes = visibility_indexes(tile_row, tile_col)
-
-      visibility_indexes.each do |i|
-        reset_visibility(i)
-      end
-    end
-
-    def reset_visibility(index)
-      if visibility = @visibilities[index]
-        return unless visibility.clear?
-        @visibilities[index] = Visibility::Fog
+      visibilities_from_tile(tile_row, tile_col).each do |visibility, row, col|
+        return if visibility.none?
+        @visibilities[row][col] = Visibility::Fog
       end
     end
 
@@ -168,14 +160,29 @@ module MiniMonsters
       pvy = player.torch_cy - player.visibility_radius
       size = player.visibility_radius * 2
 
-      min_row = (pvy // tile_size - 1).clamp(0, rows - 1)
-      min_col = (pvx // tile_size - 1).clamp(0, cols - 1)
-      max_row = (((pvy + size) // tile_size) + 1).clamp(0, rows - 1)
-      max_col = (((pvx + size) // tile_size) + 1).clamp(0, cols - 1)
+      min_row = (pvy // tile_size - 1).clamp(0, rows - 1).to_i
+      min_col = (pvx // tile_size - 1).clamp(0, cols - 1).to_i
+      max_row = (((pvy + size) // tile_size) + 1).clamp(0, rows - 1).to_i
+      max_col = (((pvx + size) // tile_size) + 10).clamp(0, cols - 1).to_i
+
+      # min_row_reset = (min_row - 3).clamp(0, rows - 1).to_i
+      # min_col_reset = (min_col - 3).clamp(0, cols - 1).to_i
+      # max_row_reset = (max_row + 3).clamp(0, rows - 1).to_i
+      # max_col_reset = (max_col + 3).clamp(0, cols - 1).to_i
+
+      # puts ">>> update_visibility r: #{min_row_reset}..#{max_row_reset} c: #{min_col_reset}..#{max_col_reset} vs r: #{min_row}..#{max_row} c: #{min_col}..#{max_col}"
+
+      # (min_row_reset..max_row_reset).each do |row|
+      #   (min_col_reset..max_col_reset).each do |col|
+      #     # TODO: needs some work, more need to be reset then this
+      #     reset_visibility(row, col)
+      #   end
+      # end
 
       # check these tiles against player visibility circle
-      (min_row.to_i..max_row.to_i).each do |row|
-        (min_col.to_i..max_col.to_i).each do |col|
+      (min_row..max_row).each do |row|
+        (min_col..max_col).each do |col|
+          # TODO: needs some re-work, not resetting all expected prev clears to fog
           reset_visibility(row, col)
 
           next unless collision_with_circle?(col * tile_size, row * tile_size, tile_size)
@@ -185,30 +192,33 @@ module MiniMonsters
       end
     end
 
-    def visibility_indexes(tile_row, tile_col) : Array(Int32)
-      factor = VisibilitySizeFactor
-      v_tiles = factor * factor
-      indexes = [] of Int32
+    def visibilities_from_tile(tile_row, tile_col) : Array(VisibilityData)
+      visibilities = [] of VisibilityData
 
-      factor.times do |v_row|
-        factor.times do |v_col|
-          indexes << tile_row * cols * v_tiles + v_row * (factor * cols) + tile_col * factor + v_col
+      min_row = tile_row * VisibilitySizeFactor
+      min_col = tile_col * VisibilitySizeFactor
+      max_row = min_row + VisibilitySizeFactor
+      max_col = min_col + VisibilitySizeFactor
+
+      @visibilities[min_row...max_row].each_with_index do |cols, row_index|
+        row = min_row + row_index
+
+        cols[min_col...max_col].each_with_index do |visibility, col_index|
+          col = min_col + col_index
+
+          visibilities << {visibility, row, col}
         end
       end
 
-      indexes
+      visibilities
     end
 
     def update_tile_visibility(tile_row, tile_col)
       size = VisibilitySize
-      visibility_indexes = visibility_indexes(tile_row, tile_col)
 
-      visibility_indexes.each do |i|
-        row = i // v_cols
-        col = i % v_cols
-
-        if collision_with_circle?(col * size, row * size, size)
-          @visibilities[i] = Visibility::Clear
+      visibilities_from_tile(tile_row, tile_col).each do |visibility, row, col|
+        if !visibility.clear? && collision_with_circle?(col * size, row * size, size)
+          @visibilities[row][col] = Visibility::Clear
         end
       end
     end
@@ -276,19 +286,19 @@ module MiniMonsters
     end
 
     def draw_visibility(window)
-      min_row = (Screen.y // VisibilitySize).clamp(0, v_rows - 1)
-      min_col = (Screen.x // VisibilitySize).clamp(0, v_cols - 1)
-      max_row = (((Screen.y + Screen.height) // VisibilitySize) + 1).clamp(0, v_rows - 1)
-      max_col = (((Screen.x + Screen.width) // VisibilitySize) + 1).clamp(0, v_cols - 1)
+      size = VisibilitySize
+      min_row = (Screen.y // size).clamp(0, v_rows - 1).to_i
+      min_col = (Screen.x // size).clamp(0, v_cols - 1).to_i
+      max_row = (((Screen.y + Screen.height) // size) + 1).clamp(0, v_rows - 1).to_i
+      max_col = (((Screen.x + Screen.width) // size) + 1).clamp(0, v_cols - 1).to_i
 
-      (min_row.to_i..max_row.to_i).each do |row|
-        (min_col.to_i..max_col.to_i).each do |col|
-          if visibility = @visibilities[row * v_cols + col]
-            vx = col * VisibilitySize
-            vy = row * VisibilitySize
+      @visibilities[min_row..max_row].each_with_index do |cols, row_index|
+        row = min_row + row_index
 
-            visibility.draw(window, vx, vy, VisibilitySize, player.torch_left_percent)
-          end
+        cols[min_col..max_col].each_with_index do |visibility, col_index|
+          col = min_col + col_index
+
+          visibility.draw(window, col * size, row * size, size, player.torch_left_percent)
         end
       end
     end
