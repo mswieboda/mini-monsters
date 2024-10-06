@@ -9,8 +9,12 @@ module MiniMonsters
   alias Screen = GSF::Screen
   alias Timer = GSF::Timer
 
+  alias TileData = Tuple(Int32, Int32, Int32) # tile_type, row, col
+  alias Tiles = Array(TileData)
+  alias VisibilityData = Tuple(Visibility, Int32, Int32) # v, row, col
+
   TileSize = 64
-  Debug = false
+  Debug = true
 
   Game.new.run
 end

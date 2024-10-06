@@ -5,10 +5,6 @@ require "./monster"
 
 module MiniMonsters
   class Level
-    alias TileData = Tuple(Int32, Int32, Int32) # tile_type, row, col
-    alias VisibilityData = Tuple(Visibility, Int32, Int32) # v, row, col
-    alias Tiles = Array(TileData)
-
     getter player : Player
     getter rows : Int32
     getter cols : Int32
@@ -18,7 +14,7 @@ module MiniMonsters
     @visibilities : Array(Array(Visibility))
     @tile_map : TileMap
     @collidable_tile_types : Array(Int32)
-    @collidable_tiles : Array(TileData)
+    @player_collidable_tiles : Array(TileData)
 
     VisibilitySize = 16
     VisibilitySizeFactor = TileSize // VisibilitySize
@@ -32,7 +28,7 @@ module MiniMonsters
       @monsters = [] of Monster
       @visibilities = [] of Array(Visibility)
       @collidable_tile_types = [] of Int32
-      @collidable_tiles = [] of TileData
+      @player_collidable_tiles = [] of TileData
     end
 
     def tile_size
@@ -87,7 +83,7 @@ module MiniMonsters
       @tiles = tiles.in_slices_of(cols)
 
       # player_start_row and player_start_row are 0-indexed
-      player.jump_to_tile(json["player_start_row"].as_i, json["player_start_col"].as_i, tile_size)
+      player.jump_to_tile(json["player_start_row"].as_i, json["player_start_col"].as_i)
 
       return if tile_sheet_data_file.empty?
 
@@ -112,7 +108,7 @@ module MiniMonsters
     def init_monsters
     end
 
-    def collidable_tiles : Tiles
+    def player_collidable_tiles : Tiles
       collidable_tiles = [] of TileData
 
       px = player.collision_box_x - player.collision_box.size / 2
@@ -140,9 +136,19 @@ module MiniMonsters
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks)
-      @collidable_tiles = collidable_tiles if player.moved?
+      if player.moved?
+        @player_collidable_tiles = player_collidable_tiles
 
-      player.update(frame_time, keys, joysticks, width, height, @collidable_tiles, tile_size)
+        @monsters
+          .select(&.follow_range?(player))
+          .each(&.follow_player!)
+      end
+
+      player.update(frame_time, keys, joysticks, width, height, @player_collidable_tiles)
+
+      monsters
+        .select(&.following?)
+        .each(&.update_following(frame_time, player.cx, player.cy, player.monster_radius))
 
       update_visibility if player.moved?
     end
@@ -209,35 +215,7 @@ module MiniMonsters
     end
 
     def collision_with_circle?(x, y, size)
-      cx, cy, radius = {player.torch_cx, player.torch_cy, player.visibility_radius}
-
-      # temporary variables to set edges for testing
-      test_x = cx
-      test_y = cy
-
-      # which edge is closest?
-      if cx < x
-        # test left edge
-        test_x = x
-      elsif cx > x + size
-        # right edge
-        test_x = x + size
-      end
-
-      if cy < y
-        # top edge
-        test_y = y
-      elsif cy > y + size
-        # bottom edge
-        test_y = y + size
-      end
-
-      # get distance from closest edges
-      dist_x = cx - test_x
-      dist_y = cy - test_y
-
-      # if distance is less than radius, it collides
-      Math.sqrt(dist_x ** 2 + dist_y ** 2) <= radius
+      Box.collides?(size, x, y, player.torch_cx, player.torch_cy, player.visibility_radius)
     end
 
     def draw(window : SF::RenderWindow)
@@ -254,7 +232,7 @@ module MiniMonsters
       return unless Debug
 
       draw_collision_tiles(window)
-      player.draw_monster_attack_radius(window)
+      player.draw_monster_follow_radius(window)
     end
 
     def draw_collision_tiles(window)
@@ -263,7 +241,7 @@ module MiniMonsters
       rectangle.outline_color = SF::Color::Cyan
       rectangle.outline_thickness = 2
 
-      @collidable_tiles.each do |_tile, row, col|
+      @player_collidable_tiles.each do |_tile, row, col|
         rectangle.position = {col * tile_size, row * tile_size}
 
         window.draw(rectangle)

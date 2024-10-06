@@ -1,20 +1,10 @@
-require "./box"
+require "./movable"
 
 module MiniMonsters
-  class Player
-    alias TileData = Tuple(Int32, Int32, Int32) # tile_type, row, col
-    alias Tiles = Array(TileData)
-
-    getter x : Int32 | Float32
-    getter y : Int32 | Float32
-    getter dx : Int32 | Float32
-    getter dy : Int32 | Float32
-    getter? moved
+  class Player < Movable
     getter animations : GSF::Animations
-    getter collision_box : Box
 
     Size = 128
-    Radius = Size / 2
     Speed = 512
     VisibilityRadius = 512
     SpriteWidth = 96
@@ -27,18 +17,15 @@ module MiniMonsters
     MonsterRadiusMin = 96
     MonsterRadiusMax = 256
     MonsterRadiusColor = SF::Color.new(255, 251, 0, 7)
-    MonsterAttackRadius = VisibilityRadius - 128
+    MonsterFollowRadius = VisibilityRadius - 128
     CollisionBoxSize = 40
     CollisionBoxXOffset = 24
     CollisionBoxYOffset = 96
 
     @torch_duration_alpha : Int32
 
-    def initialize(@x = 0, @y = 0)
-      @dx = 0
-      @dy = 0
-      @moved = false
-      @collision_box = Box.new(CollisionBoxSize)
+    def initialize(row = 0, col = 0)
+      super
 
       idle = GSF::Animation.new(loops: true)
       idle.add(Sheet, 0, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
@@ -60,12 +47,24 @@ module MiniMonsters
       @torch_segment_timer.start
     end
 
-    def radius
-      Radius
-    end
-
     def size
       Size
+    end
+
+    def speed
+      Speed
+    end
+
+    def collision_box_size
+      CollisionBoxSize
+    end
+
+    def collision_box_x
+      x + CollisionBoxXOffset
+    end
+
+    def collision_box_y
+      y + CollisionBoxYOffset
     end
 
     def visibility_radius
@@ -88,12 +87,8 @@ module MiniMonsters
       MonsterRadiusMin + (torch_left_percent * (MonsterRadiusMax - MonsterRadiusMin)).to_i
     end
 
-    def collision_box_x
-      x + CollisionBoxXOffset
-    end
-
-    def collision_box_y
-      y + CollisionBoxYOffset
+    def monster_follow_radius
+      MonsterFollowRadius
     end
 
     def init
@@ -101,10 +96,10 @@ module MiniMonsters
       @torch_segment_timer.start
     end
 
-    def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height, collidable_tiles : Tiles, tile_size : Int32)
+    def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height, collidable_tiles : Tiles)
       update_movement_dx_input(keys, joysticks)
       update_movement_dy_input(keys, joysticks)
-      update_movement(frame_time, level_width, level_height, collidable_tiles, tile_size)
+      update_movement(frame_time, level_width, level_height, collidable_tiles)
       play_animation
       animations.update(frame_time)
       update_torch_segements
@@ -122,56 +117,6 @@ module MiniMonsters
 
       @dy -= 1 if keys.pressed?([Keys::W]) || joysticks.left_stick_moved_up? || joysticks.d_pad_moved_up?
       @dy += 1 if keys.pressed?([Keys::S]) || joysticks.left_stick_moved_down? || joysticks.d_pad_moved_down?
-    end
-
-    def update_movement(frame_time, level_width, level_height, collidable_tiles : Tiles, tile_size : Int32)
-      @moved = false
-
-      return if dx == 0 && dy == 0
-
-      return if dx == 0 && dy == 0
-
-      update_with_direction_and_speed(frame_time)
-      move_with_level(level_width, level_height)
-
-      return if dx == 0 && dy == 0
-
-      move_with_collidables(collidable_tiles, tile_size)
-
-      return if dx == 0 && dy == 0
-
-      move(dx, dy)
-    end
-
-    def update_with_direction_and_speed(frame_time)
-      directional_speed = dx != 0 && dy != 0 ? Speed / 1.4142 : Speed
-      @dx *= (directional_speed * frame_time).to_f32
-      @dy *= (directional_speed * frame_time).to_f32
-    end
-
-    def move_with_level(level_width, level_height)
-      @dx = 0 if collision_box_x + dx < 0 || collision_box_x + collision_box.size + dx > level_width
-      @dy = 0 if collision_box_y + dy < 0 || collision_box_y + collision_box.size + dy > level_height
-    end
-
-    def move_with_collidables(tiles, tile_size)
-      t_c_box = Box.new(tile_size)
-
-      tiles.each do |_tile, row, col|
-        if collides?(dx, 0, t_c_box, col * tile_size, row * tile_size)
-          @dx = 0
-          break
-        end
-      end
-
-      return if dx == 0 && dy == 0
-
-      tiles.each do |_tile, row, col|
-        if collides?(0, dy, t_c_box, col * tile_size, row * tile_size)
-          @dy = 0
-          break
-        end
-      end
     end
 
     def play_animation
@@ -196,23 +141,11 @@ module MiniMonsters
       end
     end
 
-    def move(dx, dy)
-      jump(x + dx, y + dy)
-    end
+    def jump_to_tile(row, col)
+      x = col * TileSize + TileSize // 2 - CollisionBoxXOffset - collision_box.size // 2
+      y = row * TileSize + TileSize // 2 - CollisionBoxYOffset - collision_box.size // 2
 
-    def jump(x, y)
-      @x = x
-      @y = y
-
-      @moved = true
-    end
-
-    def jump_to_tile(row, col, tile_size)
-      jump(col * tile_size, row * tile_size)
-    end
-
-    def collides?(dx, dy, other : Box, other_x, other_y)
-      collision_box.collides?(collision_box_x + dx, collision_box_y + dy, other, other_x, other_y)
+      jump(x, y)
     end
 
     def draw(window : SF::RenderWindow)
@@ -244,8 +177,8 @@ module MiniMonsters
       window.draw(circle)
     end
 
-    def draw_monster_attack_radius(window : SF::RenderWindow)
-      draw_circle_from_torch(window, MonsterAttackRadius, SF::Color.new(255, 0, 255, 7))
+    def draw_monster_follow_radius(window : SF::RenderWindow)
+      draw_circle_from_torch(window, monster_follow_radius, SF::Color.new(255, 0, 255, 7))
     end
 
     def draw_monster_radius(window : SF::RenderWindow)

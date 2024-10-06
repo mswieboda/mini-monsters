@@ -5,6 +5,38 @@ module MiniMonsters
     def initialize(@size)
     end
 
+    # Box (size, x, y) with circle (cx, cy, radius)
+    def self.collides?(size, x, y, cx, cy, radius)
+      # temporary variables to set edges for testing
+      test_x = cx
+      test_y = cy
+
+      # which edge is closest?
+      if cx < x
+        # test left edge
+        test_x = x
+      elsif cx > x + size
+        # right edge
+        test_x = x + size
+      end
+
+      if cy < y
+        # top edge
+        test_y = y
+      elsif cy > y + size
+        # bottom edge
+        test_y = y + size
+      end
+
+      # get distance from closest edges
+      dist_x = cx - test_x
+      dist_y = cy - test_y
+
+      # if distance is less than radius, it collides
+      Math.sqrt(dist_x ** 2 + dist_y ** 2) <= radius
+    end
+
+    # with other Box
     def collides?(x, y, other : Box, other_x, other_y)
       # calc right and bottom edges (note x, y are centered)
       right = x + size
@@ -21,6 +53,11 @@ module MiniMonsters
       # check if boxes overlap on both axes
       (left < other_right && right >= other_left) &&
         (top < other_bottom && bottom >= other_top)
+    end
+
+    # with circle (cx, cy, radius)
+    def collides?(x, y, cx, cy, radius)
+      self.class.collides?(size, x, y, cx, cy, radius)
     end
 
     def draw(window : SF::RenderWindow, x, y)

@@ -7,5 +7,9 @@ module MiniMonsters::Levels
     def tile_map_file
       TileMapFile
     end
+
+    def init_monsters
+      @monsters << Monster.new(row: 86, col: 36)
+    end
   end
 end
