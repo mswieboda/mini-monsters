@@ -5,17 +5,12 @@ module MiniMonsters::Levels
     TileMapFile = "./assets/levels/one.json"
     TileSheet = "./assets/tiles.png"
 
-    def initialize(player)
-      super(player, rows: 59, cols: 59)
+    def tile_map_file
+      TileMapFile
     end
 
-    def player_jump_to_start
-      player.jump_to_tile(9, 9, tile_size)
-    end
-
-    def init_tiles
-      tiles = Array(Int32).new(size: rows * cols, value: 24)
-      @tile_map = TileMap.new(TileSheet, tile_size, tiles, rows, cols)
+    def tile_sheet_file
+      TileSheet
     end
 
     def init_monsters

@@ -165,7 +165,7 @@ module MiniMonsters
       @moved = true
     end
 
-    def jump_to_tile(col, row, tile_size)
+    def jump_to_tile(row, col, tile_size)
       jump(col * tile_size, row * tile_size)
     end
 

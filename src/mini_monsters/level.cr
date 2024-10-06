@@ -1,3 +1,4 @@
+require "json"
 require "./tile_map"
 require "./visibility"
 require "./monster"
@@ -16,6 +17,7 @@ module MiniMonsters
     TileSize = 64
     VisibilitySize = 16
     VisibilitySizeFactor = TileSize // VisibilitySize
+    EmptyString = ""
 
     def initialize(@player : Player, @rows = 1, @cols = 1)
       @tile_map = TileMap.new
@@ -47,15 +49,27 @@ module MiniMonsters
       init_tiles
       init_visibilities
       init_monsters
-      player_jump_to_start
       update_visibility
     end
 
-    def player_jump_to_start
-      player.jump_to_tile(0, 0, tile_size)
+    def tile_map_file
+      EmptyString
+    end
+
+    def tile_sheet_file
+      EmptyString
     end
 
     def init_tiles
+      return if tile_map_file.empty? || tile_sheet_file.empty?
+
+      json = JSON.parse(File.open(tile_map_file))
+      @rows = json["height"].as_i
+      @cols = json["width"].as_i
+      tiles = json["data"].as_a.map { |j| j.as_i - 1 }
+      @tile_map = TileMap.new(tile_sheet_file, tile_size, tiles, rows, cols)
+
+      player.jump_to_tile(json["player_start_row"].as_i, json["player_start_col"].as_i, tile_size)
     end
 
     def init_visibilities
