@@ -5,6 +5,9 @@ require "./monster"
 
 module MiniMonsters
   class Level
+    alias TileData = Tuple(Int32, Int32, Int32)
+    alias Tiles = Array(TileData) # tile_type, row, col
+
     getter player : Player
     getter rows : Int32
     getter cols : Int32
@@ -20,6 +23,7 @@ module MiniMonsters
     VisibilitySizeFactor = TileSize // VisibilitySize
     EmptyString = ""
     TileSheetFile = "./assets/tiles.png"
+    TileSheetDataFile = "./assets/tiles.json"
 
     def initialize(@player : Player, @rows = 1, @cols = 1)
       @tile_map = TileMap.new
@@ -64,7 +68,7 @@ module MiniMonsters
     end
 
     def tile_sheet_data_file
-      EmptyString
+      TileSheetDataFile
     end
 
     def init_tiles
@@ -104,23 +108,25 @@ module MiniMonsters
     def init_monsters
     end
 
-    def collidable_tiles
-      @tile_map.tiles.map_with_index do |t, i|
+    # TODO: optimize this method, so we don't return all tiles!!!
+    def collidable_tiles : Tiles
+      @tile_map.tiles.map_with_index do |tile, i|
         row = i // cols
         col = i % cols
-        {t, row, col}
-      end.select do |t, row, col|
-        next false unless @collidable_tile_types.includes?(t)
+        {tile, row, col}
+      end.select do |tile, _row, _col|
+        # TODO: this part was wrong, wasn't doing it correctly
+        # next false unless @collidable_tile_types.includes?(tile)
 
-        row >= player.collision_box_x // rows && row <= player.collision_box_x + player.collision_box.size &&
-          col >= player.collision_box_y // cols && player.collision_box_y + player.collision_box.size
+        # row >= player.collision_box_x // rows && row <= player.collision_box_x + player.collision_box.size &&
+        #   col >= player.collision_box_y // cols && player.collision_box_y + player.collision_box.size
+
+        @collidable_tile_types.includes?(tile)
       end
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks)
-      tiles = collidable_tiles
-      puts ">>> update tiles: #{tiles}" unless tiles.empty?
-      player.update(frame_time, keys, joysticks, width, height, tiles, tile_size)
+      player.update(frame_time, keys, joysticks, width, height, collidable_tiles, tile_size)
 
       update_visibility if player.moved?
     end

@@ -13,10 +13,10 @@ module MiniMonsters
       other_bottom = other_y + other.size
 
       # calc left and top edges (note x, y are centered)
-      left = x - size
-      other_left = other_x - size
-      top = y - size
-      other_top = other_y - size
+      left = x
+      other_left = other_x
+      top = y
+      other_top = other_y
 
       # check if boxes overlap on both axes
       (left < other_right && right >= other_left) &&

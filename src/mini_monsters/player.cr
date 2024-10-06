@@ -2,7 +2,8 @@ require "./box"
 
 module MiniMonsters
   class Player
-    alias Tiles = Array(Tuple(Int32, Int32, Int32)) # tile_type, row, col
+    alias TileData = Tuple(Int32, Int32, Int32) # tile_type, row, col
+    alias Tiles = Array(TileData)
 
     getter x : Int32 | Float32
     getter y : Int32 | Float32
@@ -149,14 +150,14 @@ module MiniMonsters
     end
 
     def move_with_level(level_width, level_height)
-      @dx = 0 if x + dx < 0 || x + size + dx > level_width
-      @dy = 0 if y + dy < 0 || y + size + dy > level_height
+      @dx = 0 if collision_box_x + dx < 0 || collision_box_x + collision_box.size + dx > level_width
+      @dy = 0 if collision_box_y + dy < 0 || collision_box_y + collision_box.size + dy > level_height
     end
 
     def move_with_collidables(tiles, tile_size)
       t_c_box = Box.new(tile_size)
 
-      tiles.each do |row, col|
+      tiles.each do |_tile, row, col|
         if collides?(dx, 0, t_c_box, col * tile_size, row * tile_size)
           @dx = 0
           break
@@ -165,7 +166,7 @@ module MiniMonsters
 
       return if dx == 0 && dy == 0
 
-      tiles.each do |row, col|
+      tiles.each do |_tile, row, col|
         if collides?(0, dy, t_c_box, col * tile_size, row * tile_size)
           @dy = 0
           break
