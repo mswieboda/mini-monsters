@@ -2,7 +2,8 @@ require "../level"
 
 module MiniMonsters::Levels
   class One < MiniMonsters::Level
-    TileSheet = "./assets/tiles/dungeon_base.png"
+    TileMapFile = "./assets/levels/one.json"
+    TileSheet = "./assets/tiles.png"
 
     def initialize(player)
       super(player, rows: 59, cols: 59)
@@ -13,7 +14,7 @@ module MiniMonsters::Levels
     end
 
     def init_tiles
-      tiles = Array(Int32).new(size: rows * cols, value: 0)
+      tiles = Array(Int32).new(size: rows * cols, value: 24)
       @tile_map = TileMap.new(TileSheet, tile_size, tiles, rows, cols)
     end
 
