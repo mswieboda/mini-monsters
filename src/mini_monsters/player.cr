@@ -1,11 +1,16 @@
+require "./box"
+
 module MiniMonsters
   class Player
+    alias Tiles = Array(Tuple(Int32, Int32, Int32)) # tile_type, row, col
+
     getter x : Int32 | Float32
     getter y : Int32 | Float32
     getter dx : Int32 | Float32
     getter dy : Int32 | Float32
     getter? moved
     getter animations : GSF::Animations
+    getter collision_box : Box
 
     Size = 128
     Radius = Size / 2
@@ -22,6 +27,9 @@ module MiniMonsters
     MonsterRadiusMax = 256
     MonsterRadiusColor = SF::Color.new(255, 251, 0, 7)
     MonsterAttackRadius = VisibilityRadius - 128
+    CollisionBoxSize = 40
+    CollisionBoxXOffset = 24
+    CollisionBoxYOffset = 96
 
     @torch_duration_alpha : Int32
 
@@ -29,6 +37,7 @@ module MiniMonsters
       @dx = 0
       @dy = 0
       @moved = false
+      @collision_box = Box.new(CollisionBoxSize)
 
       idle = GSF::Animation.new(loops: true)
       idle.add(Sheet, 0, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
@@ -78,15 +87,23 @@ module MiniMonsters
       MonsterRadiusMin + (torch_left_percent * (MonsterRadiusMax - MonsterRadiusMin)).to_i
     end
 
+    def collision_box_x
+      x + CollisionBoxXOffset
+    end
+
+    def collision_box_y
+      y + CollisionBoxYOffset
+    end
+
     def init
       @torch_duration_alpha = TorchMaxAlpha - 1
       @torch_segment_timer.start
     end
 
-    def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height)
+    def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height, collidable_tiles : Tiles, tile_size : Int32)
       update_movement_dx_input(keys, joysticks)
       update_movement_dy_input(keys, joysticks)
-      update_movement(frame_time, level_width, level_height)
+      update_movement(frame_time, level_width, level_height, collidable_tiles, tile_size)
       play_animation
       animations.update(frame_time)
       update_torch_segements
@@ -106,7 +123,7 @@ module MiniMonsters
       @dy += 1 if keys.pressed?([Keys::S]) || joysticks.left_stick_moved_down? || joysticks.d_pad_moved_down?
     end
 
-    def update_movement(frame_time, level_width, level_height)
+    def update_movement(frame_time, level_width, level_height, collidable_tiles : Tiles, tile_size : Int32)
       @moved = false
 
       return if dx == 0 && dy == 0
@@ -115,6 +132,10 @@ module MiniMonsters
 
       update_with_direction_and_speed(frame_time)
       move_with_level(level_width, level_height)
+
+      return if dx == 0 && dy == 0
+
+      move_with_collidables(collidable_tiles, tile_size)
 
       return if dx == 0 && dy == 0
 
@@ -130,6 +151,26 @@ module MiniMonsters
     def move_with_level(level_width, level_height)
       @dx = 0 if x + dx < 0 || x + size + dx > level_width
       @dy = 0 if y + dy < 0 || y + size + dy > level_height
+    end
+
+    def move_with_collidables(tiles, tile_size)
+      t_c_box = Box.new(tile_size)
+
+      tiles.each do |row, col|
+        if collides?(dx, 0, t_c_box, col * tile_size, row * tile_size)
+          @dx = 0
+          break
+        end
+      end
+
+      return if dx == 0 && dy == 0
+
+      tiles.each do |row, col|
+        if collides?(0, dy, t_c_box, col * tile_size, row * tile_size)
+          @dy = 0
+          break
+        end
+      end
     end
 
     def play_animation
@@ -169,9 +210,25 @@ module MiniMonsters
       jump(col * tile_size, row * tile_size)
     end
 
+    def collides?(dx, dy, other : Box, other_x, other_y)
+      collision_box.collides?(collision_box_x + dx, collision_box_y + dy, other, other_x, other_y)
+    end
+
     def draw(window : SF::RenderWindow)
       draw_monster_radius(window) if @torch_duration_alpha > 0
       animations.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2)
+      collision_box.draw(window, collision_box_x, collision_box_y)
+      draw_player_border(window)
+    end
+
+    def draw_player_border(window)
+      rectangle = SF::RectangleShape.new({size, size})
+      rectangle.position = {x, y}
+      rectangle.fill_color = SF::Color::Transparent
+      rectangle.outline_color = SF::Color::Green
+      rectangle.outline_thickness = 2
+
+      window.draw(rectangle)
     end
 
     def draw_circle_from_torch(window, radius, color)

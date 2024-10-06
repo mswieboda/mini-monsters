@@ -12,6 +12,7 @@ module MiniMonsters
 
     @visibilities : Array(Visibility)
     @tile_map : TileMap
+    @collidable_tile_types : Array(Int32)
 
     Debug = true
     TileSize = 64
@@ -24,6 +25,7 @@ module MiniMonsters
       @tile_map = TileMap.new
       @monsters = [] of Monster
       @visibilities = [] of Visibility
+      @collidable_tile_types = [] of Int32
     end
 
     def tile_size
@@ -61,16 +63,37 @@ module MiniMonsters
       TileSheetFile
     end
 
+    def tile_sheet_data_file
+      EmptyString
+    end
+
     def init_tiles
       return if tile_map_file.empty? || tile_sheet_file.empty?
 
       json = JSON.parse(File.open(tile_map_file))
       @rows = json["height"].as_i
       @cols = json["width"].as_i
+
+      # tile data is 1-indexed not 0-indexed so subtract 1
       tiles = json["data"].as_a.map { |j| j.as_i - 1 }
       @tile_map = TileMap.new(tile_sheet_file, tile_size, tiles, rows, cols)
 
+      # player_start_row and player_start_row are 0-indexed
       player.jump_to_tile(json["player_start_row"].as_i, json["player_start_col"].as_i, tile_size)
+
+      return if tile_sheet_data_file.empty?
+
+      # sets tiles that are collidable from json
+      json = JSON.parse(File.open(tile_sheet_data_file))
+
+      if raw_ranges = json.dig("collidables", "ranges")
+        ranges = raw_ranges.as_a.map(&.as_a.map(&.as_i))
+
+        ranges.each do |range|
+          min, max = range
+          @collidable_tile_types += (min..max).to_a
+        end
+      end
     end
 
     def init_visibilities
@@ -81,8 +104,23 @@ module MiniMonsters
     def init_monsters
     end
 
+    def collidable_tiles
+      @tile_map.tiles.map_with_index do |t, i|
+        row = i // cols
+        col = i % cols
+        {t, row, col}
+      end.select do |t, row, col|
+        next false unless @collidable_tile_types.includes?(t)
+
+        row >= player.collision_box_x // rows && row <= player.collision_box_x + player.collision_box.size &&
+          col >= player.collision_box_y // cols && player.collision_box_y + player.collision_box.size
+      end
+    end
+
     def update(frame_time, keys : Keys, joysticks : Joysticks)
-      player.update(frame_time, keys, joysticks, width, height)
+      tiles = collidable_tiles
+      puts ">>> update tiles: #{tiles}" unless tiles.empty?
+      player.update(frame_time, keys, joysticks, width, height, tiles, tile_size)
 
       update_visibility if player.moved?
     end
