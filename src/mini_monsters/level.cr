@@ -111,8 +111,6 @@ module MiniMonsters
     def collidable_tiles(movable : Movable)
       tiles = [] of TileData
 
-      return tiles unless movable.moved?
-
       size = movable.collision_radius * 2
       lx = movable.collision_cx - size
       ly = movable.collision_cy - size
