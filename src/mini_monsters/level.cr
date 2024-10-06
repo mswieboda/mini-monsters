@@ -18,6 +18,7 @@ module MiniMonsters
     VisibilitySize = 16
     VisibilitySizeFactor = TileSize // VisibilitySize
     EmptyString = ""
+    TileSheetFile = "./assets/tiles.png"
 
     def initialize(@player : Player, @rows = 1, @cols = 1)
       @tile_map = TileMap.new
@@ -57,7 +58,7 @@ module MiniMonsters
     end
 
     def tile_sheet_file
-      EmptyString
+      TileSheetFile
     end
 
     def init_tiles

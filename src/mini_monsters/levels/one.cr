@@ -3,14 +3,9 @@ require "../level"
 module MiniMonsters::Levels
   class One < MiniMonsters::Level
     TileMapFile = "./assets/levels/one.json"
-    TileSheet = "./assets/tiles.png"
 
     def tile_map_file
       TileMapFile
-    end
-
-    def tile_sheet_file
-      TileSheet
     end
 
     def init_monsters

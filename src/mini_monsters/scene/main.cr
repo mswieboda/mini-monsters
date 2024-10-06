@@ -1,5 +1,5 @@
 require "../player"
-require "../levels/one"
+require "../levels/maze_1"
 require "../hud"
 
 module MiniMonsters::Scene
@@ -13,7 +13,7 @@ module MiniMonsters::Scene
       super(:main)
 
       @player = Player.new
-      @level = Levels::One.new(player)
+      @level = Levels::Maze1.new(player)
       @hud = HUD.new
     end
 
