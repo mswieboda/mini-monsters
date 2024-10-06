@@ -147,13 +147,6 @@ module MiniMonsters
       update_visibility if player.moved?
     end
 
-    def reset_visibility(tile_row, tile_col)
-      visibilities_from_tile(tile_row, tile_col).each do |visibility, row, col|
-        return if visibility.none?
-        @visibilities[row][col] = Visibility::Fog
-      end
-    end
-
     def update_visibility
       # get all tiles within rectangle of player visibility radius
       pvx = player.torch_cx - player.visibility_radius
@@ -163,32 +156,24 @@ module MiniMonsters
       min_row = (pvy // tile_size - 1).clamp(0, rows - 1).to_i
       min_col = (pvx // tile_size - 1).clamp(0, cols - 1).to_i
       max_row = (((pvy + size) // tile_size) + 1).clamp(0, rows - 1).to_i
-      max_col = (((pvx + size) // tile_size) + 10).clamp(0, cols - 1).to_i
-
-      # min_row_reset = (min_row - 3).clamp(0, rows - 1).to_i
-      # min_col_reset = (min_col - 3).clamp(0, cols - 1).to_i
-      # max_row_reset = (max_row + 3).clamp(0, rows - 1).to_i
-      # max_col_reset = (max_col + 3).clamp(0, cols - 1).to_i
-
-      # puts ">>> update_visibility r: #{min_row_reset}..#{max_row_reset} c: #{min_col_reset}..#{max_col_reset} vs r: #{min_row}..#{max_row} c: #{min_col}..#{max_col}"
-
-      # (min_row_reset..max_row_reset).each do |row|
-      #   (min_col_reset..max_col_reset).each do |col|
-      #     # TODO: needs some work, more need to be reset then this
-      #     reset_visibility(row, col)
-      #   end
-      # end
+      max_col = (((pvx + size) // tile_size) + 1).clamp(0, cols - 1).to_i
 
       # check these tiles against player visibility circle
       (min_row..max_row).each do |row|
         (min_col..max_col).each do |col|
-          # TODO: needs some re-work, not resetting all expected prev clears to fog
           reset_visibility(row, col)
 
           next unless collision_with_circle?(col * tile_size, row * tile_size, tile_size)
 
           update_tile_visibility(row, col)
         end
+      end
+    end
+
+    def reset_visibility(tile_row, tile_col)
+      visibilities_from_tile(tile_row, tile_col).each do |visibility, row, col|
+        next unless visibility.clear?
+        @visibilities[row][col] = Visibility::Fog
       end
     end
 
