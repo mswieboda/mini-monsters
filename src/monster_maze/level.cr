@@ -369,6 +369,8 @@ module MonsterMaze
           .each(&.follow_player!)
 
         play_sound(@sound_footsteps)
+      else
+        @sound_footsteps.stop
       end
 
       player.update(frame_time, keys, joysticks, width, height, @player_collidable_tiles)
