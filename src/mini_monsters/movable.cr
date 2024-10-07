@@ -63,6 +63,7 @@ module MiniMonsters
 
     def update_movement(
       frame_time,
+      speed = speed,
       level_width = 0,
       level_height = 0,
       collidable_tiles = [] of TileData,
@@ -70,7 +71,7 @@ module MiniMonsters
     )
       @moved = false
 
-      update_with_direction_and_speed(frame_time)
+      update_with_direction_and_speed(frame_time, speed)
       move_with_level(level_width, level_height)
 
       return if dx == 0 && dy == 0
@@ -86,7 +87,7 @@ module MiniMonsters
       move(dx, dy)
     end
 
-    def update_with_direction_and_speed(frame_time)
+    def update_with_direction_and_speed(frame_time, speed)
       directional_speed = dx != 0 && dy != 0 ? speed / 1.4142 : speed
       @dx *= (directional_speed * frame_time).to_f32
       @dy *= (directional_speed * frame_time).to_f32

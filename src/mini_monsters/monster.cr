@@ -4,16 +4,26 @@ module MiniMonsters
   class Monster < Movable
     getter animations : GSF::Animations
     getter? following
+    getter? attacking
+    getter? attacked
+    getter next_attack_timer : Timer
 
-    CollisionRadius = 24
+    CollisionRadius = 16
     Speed = 256
     AnimationFrames = 1
     EmptyString = ""
+    AttackSpeed = Speed * 3
+    NextAttackDurationMin = 300 # milliseconds
+    NextAttackDurationMax = 500 # milliseconds
+    Damage = 5
 
     def initialize(row = 0, col = 0)
       super
 
       @following = false
+      @attacking = false
+      @attacked = false
+      @next_attack_timer = Timer.new(NextAttackDurationMax.milliseconds, true)
 
       # animations
       idle_right = GSF::Animation.new
@@ -24,12 +34,28 @@ module MiniMonsters
       init_animations
     end
 
+    def speed
+      Speed
+    end
+
+    def collision_radius
+      CollisionRadius
+    end
+
     def animation_frames
       AnimationFrames
     end
 
     def sprite_sheet
       EmptyString
+    end
+
+    def attack_speed
+      AttackSpeed
+    end
+
+    def damage
+      Damage
     end
 
     def init_animations
@@ -59,14 +85,6 @@ module MiniMonsters
       animations.add(name, animation, flip_horizontal: flip_horizontal, flip_vertical: flip_vertical)
     end
 
-    def speed
-      Speed
-    end
-
-    def collision_radius
-      CollisionRadius
-    end
-
     def follow_range?(player : Player)
       # more efficient guards before doing box/circle collision detection
       return false if following?
@@ -82,6 +100,19 @@ module MiniMonsters
       @following = true
     end
 
+    def ready_to_attack?
+      next_attack_timer.done?
+    end
+
+    def attack!
+      @attacking = true
+    end
+
+    def stop_attacking!
+      @attacking = false
+      @attacked = false
+    end
+
     def update(frame_time)
       animations.update(frame_time)
       play_animation
@@ -90,16 +121,33 @@ module MiniMonsters
     def update_following(frame_time, p_cx, p_cy, p_dist, collidable_tiles, movables)
       update(frame_time)
 
-      move_towards(p_cx, p_cy, p_dist)
+      @attacked = false
+
+      if attacking?
+        move_towards(p_cx, p_cy, 0, 0)
+
+        dist = MathHelpers.distance(cx, cy, p_cx, p_cy)
+
+        if dist <= size // 2
+          @attacked = true
+          @next_attack_timer.duration = rand(NextAttackDurationMin..NextAttackDurationMax).milliseconds
+          @next_attack_timer.restart
+          @attacking = false
+        end
+      end
+
+      move_towards(p_cx, p_cy, p_dist, size) unless attacking?
 
       return if dx == 0 && dy == 0
 
-      update_movement(frame_time, collidable_tiles: collidable_tiles, movables: movables)
+      movement_speed = attacking? || attacked? ? attack_speed : speed
+
+      update_movement(frame_time, speed: movement_speed, collidable_tiles: collidable_tiles, movables: movables)
     end
 
-    def move_towards(p_cx, p_cy, p_dist)
-      @dx = move_change_from_distance(p_cx, cx, p_dist, size)
-      @dy = move_change_from_distance(p_cy, cy, p_dist, size)
+    def move_towards(p_cx, p_cy, p_dist, inner_threshold)
+      @dx = move_change_from_distance(p_cx, cx, p_dist, inner_threshold)
+      @dy = move_change_from_distance(p_cy, cy, p_dist, inner_threshold)
     end
 
     def move_change_from_distance(p_value, value, p_dist, inner_threshold)

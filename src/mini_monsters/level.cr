@@ -237,7 +237,24 @@ module MiniMonsters
         tiles = close_collidable_tiles(monster)
         movables = close_collidable_movables(monster)
 
+        if player.torch_out?
+          monster.attack! if monster.ready_to_attack?
+        else
+          monster.stop_attacking!
+        end
+
         monster.update_following(frame_time, player.cx, player.cy, player.monster_radius, tiles, movables)
+
+        if monster.attacked?
+          player.take_damage(monster.damage)
+
+          # TODO: play grunt / hit sound
+
+          if player.dead? && player.death_timer.done?
+            # TODO:
+            #  - display game over menu
+          end
+        end
       end
 
       update_visibility if player.moved?

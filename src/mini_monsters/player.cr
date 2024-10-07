@@ -4,6 +4,9 @@ module MiniMonsters
   class Player < Movable
     getter animations : GSF::Animations
     getter animations_flame : GSF::Animations
+    getter health : Int32
+    getter? dead
+    getter death_timer : Timer
 
     Size = 96
     Speed = 448
@@ -29,6 +32,9 @@ module MiniMonsters
     CollisionRadius = 24
     CollisionXOffset = 24
     CollisionYOffset = 96
+    MaxHealth = 100
+    DeadDarkenMin = 63
+    DeathAnimationDuration = 300.milliseconds
 
     @torch_duration_alpha : Int32
     @last_dx : Int32
@@ -40,6 +46,9 @@ module MiniMonsters
       @torch_segment_timer = Timer.new(TorchSegmentDuration)
       @torch_segment_timer.start
       @last_dx = 0
+      @health = MaxHealth
+      @dead = false
+      @death_timer = Timer.new(DeathAnimationDuration)
 
       @animations = GSF::Animations.new(:idle_left)
       @animations_flame = GSF::Animations.new(:idle_flame_left)
@@ -126,6 +135,10 @@ module MiniMonsters
       @torch_duration_alpha / (TorchMaxAlpha - 1)
     end
 
+    def torch_out?
+      @torch_duration_alpha <= 0
+    end
+
     def monster_radius
       MonsterRadiusMin + (torch_left_percent * (MonsterRadiusMax - MonsterRadiusMin)).to_i
     end
@@ -142,7 +155,7 @@ module MiniMonsters
     def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height, collidable_tiles : Tiles)
       update_movement_dx_input(keys, joysticks)
       update_movement_dy_input(keys, joysticks)
-      update_movement(frame_time, level_width, level_height, collidable_tiles)
+      update_movement(frame_time, level_width: level_width, level_height: level_height, collidable_tiles: collidable_tiles)
 
       play_animations
 
@@ -155,12 +168,16 @@ module MiniMonsters
     def update_movement_dx_input(keys, joysticks)
       @dx = 0
 
+      return if dead?
+
       @dx -= 1 if keys.pressed?([Keys::A]) || joysticks.left_stick_moved_left? || joysticks.d_pad_moved_left?
       @dx += 1 if keys.pressed?([Keys::D]) || joysticks.left_stick_moved_right? || joysticks.d_pad_moved_right?
     end
 
     def update_movement_dy_input(keys, joysticks)
       @dy = 0
+
+      return if dead?
 
       @dy -= 1 if keys.pressed?([Keys::W]) || joysticks.left_stick_moved_up? || joysticks.d_pad_moved_up?
       @dy += 1 if keys.pressed?([Keys::S]) || joysticks.left_stick_moved_down? || joysticks.d_pad_moved_down?
@@ -197,10 +214,6 @@ module MiniMonsters
       end
     end
 
-    def torch_refill!
-      @torch_duration_alpha = TorchMaxAlpha - 1
-    end
-
     def jump_to_tile(row, col)
       x = col * TileSize + TileSize // 2 - CollisionXOffset - collision_radius
       y = row * TileSize + TileSize // 2 - CollisionYOffset - collision_radius
@@ -208,12 +221,42 @@ module MiniMonsters
       jump(x, y)
     end
 
+    def torch_refill!
+      @torch_duration_alpha = TorchMaxAlpha - 1
+    end
+
+    def take_damage(damage : Int32)
+      return if dead?
+
+      @health -= damage
+
+      if @health <= 0
+        @health = 0
+        die!
+      end
+    end
+
+    def die!
+      @death_timer.start unless dead?
+      @dead = true
+    end
+
     def draw(window : SF::RenderWindow)
       draw_monster_radius(window) if @torch_duration_alpha > 0
 
-      animations.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2)
+      color = nil
+
+      if dead?
+        darken = DeadDarkenMin + (255 - DeadDarkenMin) * (1 - @death_timer.percent.clamp(0, 1))
+        color = SF::Color.new((DeadDarkenMin + darken.to_i).clamp(0, 255), darken.to_i, darken.to_i)
+      end
+
+      animations.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2, color: color)
 
       draw_flame(window) if @torch_duration_alpha > 0
+
+      draw_health(window) if health < MaxHealth
+
       draw_player_borders(window) if Debug
     end
 
@@ -221,6 +264,28 @@ module MiniMonsters
       flame_color = SF::Color.new(255, 255, 255, 256 - (TorchMaxAlpha - @torch_duration_alpha))
 
       animations_flame.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2, color: flame_color)
+    end
+
+    def draw_health(window)
+      margin = 4
+      height = 16
+      health_percent = (health / MaxHealth)
+      width = size * health_percent
+      color = SF::Color::Green
+
+      if health_percent < 0.3
+        color = SF::Color::Red
+      elsif health_percent < 0.60
+        color = SF::Color.new(255, 127, 0) # orange
+      elsif health_percent < 0.75
+        color = SF::Color::Yellow
+      end
+
+      rectangle = SF::RectangleShape.new({width, height})
+      rectangle.position = {x, y - height - margin}
+      rectangle.fill_color = color
+
+      window.draw(rectangle)
     end
 
     def draw_player_borders(window)
