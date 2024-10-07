@@ -15,7 +15,6 @@ module MonsterMaze
     getter tiles : Array(Array(Int32))
     getter monsters : Array(Monster)
     getter oil_pools : Array(OilPool)
-    getter sound : SF::Sound
     getter? exit
 
     @visibilities : Array(Array(Visibility))
@@ -23,6 +22,7 @@ module MonsterMaze
     @collidable_tile_types : Array(Int32)
     @player_collidable_tiles : Array(TileData)
     @sound_buffer_oil_dip : SF::SoundBuffer
+    @sound_oil_dip : SF::Sound
     @oil_fill_sprite : SF::Sprite
     @menu_items : GSF::MenuItems
     @spawn_tiles : Array(TileData)
@@ -31,6 +31,10 @@ module MonsterMaze
     @finish_area_y : Int32
     @game_win_timer : Timer
     @game_over_text : SF::Text
+    @sound_buffer_footsteps : SF::SoundBuffer
+    @sound_footsteps : SF::Sound
+    @sound_buffer_thud : SF::SoundBuffer
+    @sound_thud : SF::Sound
 
     VisibilitySize = 16
     VisibilitySizeFactor = TileSize // VisibilitySize
@@ -39,6 +43,8 @@ module MonsterMaze
     TileSheetDataFile = "./assets/tiles/tiles.json"
     OilFillSheetFile = "./assets/tiles/oil_fill.png"
     SoundOilDip = "./assets/sounds/oil_dip.ogg"
+    SoundFootsteps = "./assets/sounds/footsteps.ogg"
+    SoundThud = "./assets/sounds/thud.ogg"
     TextColorFocused = SF::Color.new(255, 127, 0)
     GameWinDuration = 500.milliseconds
 
@@ -50,8 +56,12 @@ module MonsterMaze
       @collidable_tile_types = [] of Int32
       @player_collidable_tiles = [] of TileData
       @oil_pools = [] of OilPool
-      @sound = SF::Sound.new
       @sound_buffer_oil_dip = SF::SoundBuffer.new
+      @sound_oil_dip = SF::Sound.new
+      @sound_buffer_footsteps = SF::SoundBuffer.new
+      @sound_footsteps = SF::Sound.new
+      @sound_buffer_thud = SF::SoundBuffer.new
+      @sound_thud = SF::Sound.new
       @oil_fill_sprite = SF::Sprite.new
       @exit = false
       @menu_items = GSF::MenuItems.new(
@@ -246,6 +256,14 @@ module MonsterMaze
 
     def init_sounds
       @sound_buffer_oil_dip = SF::SoundBuffer.from_file(SoundOilDip)
+      @sound_oil_dip = SF::Sound.new(@sound_buffer_oil_dip)
+
+      @sound_buffer_footsteps = SF::SoundBuffer.from_file(SoundFootsteps)
+      @sound_footsteps = SF::Sound.new(@sound_buffer_footsteps)
+      @sound_footsteps.volume = 19
+
+      @sound_buffer_thud = SF::SoundBuffer.from_file(SoundThud)
+      @sound_thud = SF::Sound.new(@sound_buffer_thud)
     end
 
     def init_sprites
@@ -265,9 +283,8 @@ module MonsterMaze
       end
     end
 
-    def play_sound(buffer : SF::SoundBuffer)
-      @sound.buffer = buffer
-      @sound.play
+    def play_sound(sound : SF::Sound)
+      sound.play unless sound.status == SF::SoundSource::Playing
     end
 
     def close_collidable_tiles(movable : Movable)
@@ -350,13 +367,15 @@ module MonsterMaze
         @monsters
           .select(&.follow_range?(player))
           .each(&.follow_player!)
+
+        play_sound(@sound_footsteps)
       end
 
       player.update(frame_time, keys, joysticks, width, height, @player_collidable_tiles)
 
       oil_pools.each do |oil_pool|
         if player.collides?(Circle.new(oil_pool.radius), oil_pool.cx, oil_pool.cy)
-          play_sound(@sound_buffer_oil_dip)
+          play_sound(@sound_oil_dip)
           oil_pool.dip!
           player.torch_refill!
         end
@@ -377,7 +396,7 @@ module MonsterMaze
         if monster.attacked?
           player.take_damage(monster.damage)
 
-          # TODO: play grunt / hit sound
+          play_sound(@sound_thud)
         end
       end
 
