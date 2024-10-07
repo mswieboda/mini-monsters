@@ -1,19 +1,18 @@
 require "../player"
-require "../levels/maze_1"
+require "../level"
 require "../hud"
 
 module MiniMonsters::Scene
   class Main < GSF::Scene
+    property level : Level
     getter player : Player
-    getter level : Level
 
     CenteredViewPadding = 128
 
-    def initialize
+    def initialize(@player : Player)
       super(:main)
 
-      @player = Player.new
-      @level = Levels::Maze1.new(player)
+      @level = Level.new(player)
       @hud = HUD.new
     end
 

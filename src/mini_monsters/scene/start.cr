@@ -1,7 +1,11 @@
+require "../levels/maze_1"
+require "../levels/maze_2"
+
 module MiniMonsters::Scene
   class Start < GSF::Scene
     getter start_scene : Symbol?
     getter items
+    getter level_class
 
     def initialize
       super(:start)
@@ -9,9 +13,10 @@ module MiniMonsters::Scene
       @start_scene = nil
       @items = GSF::MenuItems.new(
         font: Font.default,
-        items: ["start", "exit"],
+        items: ["start maze 1", "start maze 2", "exit"],
         initial_focused_index: 0
       )
+      @level_class = Level
     end
 
     def reset
@@ -20,7 +25,7 @@ module MiniMonsters::Scene
       @start_scene = nil
       @items = GSF::MenuItems.new(
         font: Font.default,
-        items: ["start", "exit"],
+        items: ["start maze 1", "start maze 2", "exit"],
         initial_focused_index: 0
       )
     end
@@ -30,7 +35,11 @@ module MiniMonsters::Scene
 
       if items.selected?(keys, mouse, joysticks)
         case items.focused_label
-        when "start"
+        when "start maze 1"
+          @level_class = Levels::Maze1
+          @start_scene = :main
+        when "start maze 2"
+          @level_class = Levels::Maze2
           @start_scene = :main
         when "exit"
           @exit = true

@@ -79,6 +79,7 @@ module MiniMonsters
 
       # tile data is 1-indexed not 0-indexed so subtract 1
       tiles = json["data"].as_a.map { |j| j.as_i - 1 }
+      # tiles = json["data"].as_a.map { |j| j.as_i + 1 }
       @tile_map = TileMap.new(tile_sheet_file, tile_size, tiles, rows, cols)
       @tiles = tiles.in_slices_of(cols)
 
