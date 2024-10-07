@@ -2,6 +2,8 @@ require "json"
 require "./tile_map"
 require "./visibility"
 require "./monster"
+require "./rat"
+require "./spider"
 require "./oil_pool"
 require "./rect"
 
@@ -198,6 +200,10 @@ module MiniMonsters
           @spawn_tiles << {tile, row, col} if tile == spawn_tile
         end
       end
+
+      @spawn_tiles.each do |tile, row, col|
+        spawn_monster(row, col)
+      end
     end
 
     def init_finish_area(finish_tile)
@@ -246,6 +252,17 @@ module MiniMonsters
       texture = SF::Texture.from_file(OilFillSheetFile, SF::IntRect.new(0, 0, tile_size, tile_size))
 
       @oil_fill_sprite = SF::Sprite.new(texture)
+    end
+
+    def spawn_monster(row, col)
+      monster_type = rand(5)
+
+      case monster_type
+      when 0, 1
+        @monsters << Rat.new(row, col)
+      else
+        @monsters << Spider.new(row, col)
+      end
     end
 
     def play_sound(buffer : SF::SoundBuffer)
