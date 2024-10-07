@@ -156,6 +156,15 @@ module MiniMonsters
       @death_timer.stop
     end
 
+    def reset
+      @torch_duration_alpha = TorchMaxAlpha - 1
+      @torch_segment_timer.start
+      @last_dx = 0
+      @health = MaxHealth
+      @dead = false
+      @death_timer.stop
+    end
+
     def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height, collidable_tiles : Tiles)
       update_movement_dx_input(keys, joysticks)
       update_movement_dy_input(keys, joysticks)

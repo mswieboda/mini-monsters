@@ -4,7 +4,7 @@ module MiniMonsters
   struct Box
     property size : Int32
 
-    def initialize(@size)
+    def initialize(@size = 1)
     end
 
     # Box (size, x, y) with Circle (radius, cx, cy)

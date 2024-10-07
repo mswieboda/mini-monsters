@@ -3,6 +3,7 @@ require "./tile_map"
 require "./visibility"
 require "./monster"
 require "./oil_pool"
+require "./rect"
 
 module MiniMonsters
   class Level
@@ -13,6 +14,7 @@ module MiniMonsters
     getter monsters : Array(Monster)
     getter oil_pools : Array(OilPool)
     getter sound : SF::Sound
+    getter? exit
 
     @visibilities : Array(Array(Visibility))
     @tile_map : TileMap
@@ -20,7 +22,13 @@ module MiniMonsters
     @player_collidable_tiles : Array(TileData)
     @sound_buffer_oil_dip : SF::SoundBuffer
     @oil_fill_sprite : SF::Sprite
-    @game_over_menu_items : GSF::MenuItems
+    @menu_items : GSF::MenuItems
+    @spawn_tiles : Array(TileData)
+    @finish_area : Rect
+    @finish_area_x : Int32
+    @finish_area_y : Int32
+    @game_win_timer : Timer
+    @game_over_text : SF::Text
 
     VisibilitySize = 16
     VisibilitySizeFactor = TileSize // VisibilitySize
@@ -30,6 +38,7 @@ module MiniMonsters
     OilFillSheetFile = "./assets/tiles/oil_fill.png"
     SoundOilDip = "./assets/sounds/oil_dip.ogg"
     TextColorFocused = SF::Color.new(255, 127, 0)
+    GameWinDuration = 500.milliseconds
 
     def initialize(@player : Player, @rows = 1, @cols = 1)
       @tile_map = TileMap.new
@@ -42,13 +51,21 @@ module MiniMonsters
       @sound = SF::Sound.new
       @sound_buffer_oil_dip = SF::SoundBuffer.new
       @oil_fill_sprite = SF::Sprite.new
-      @game_over_menu_items = GSF::MenuItems.new(
+      @exit = false
+      @menu_items = GSF::MenuItems.new(
         font: Font.default,
         items: ["new game", "exit"],
         size: 32,
         text_color_focused:  TextColorFocused,
         initial_focused_index: 0
       )
+      @spawn_tiles = [] of TileData
+      @finish_area = Rect.new
+      @finish_area_x = 0
+      @finish_area_y = 0
+      @game_win_timer = Timer.new(GameWinDuration)
+      @game_over_text = SF::Text.new("", Font.default, 48)
+      @game_over_text.fill_color = TextColorFocused
     end
 
     def tile_size
@@ -87,7 +104,21 @@ module MiniMonsters
       player.dead? && player.death_timer.done?
     end
 
+    def game_win?
+      return false if player.dead?
+
+      @finish_area.collides?(
+        x: @finish_area_x,
+        y: @finish_area_y,
+        circle: player.collision_circle,
+        cx: player.collision_cx,
+        cy: player.collision_cy
+      )
+    end
+
     def init
+      player.init
+
       init_tiles
       init_visibilities
       init_monsters
@@ -98,13 +129,17 @@ module MiniMonsters
     end
 
     def reset
-      @game_over_menu_items = GSF::MenuItems.new(
+      player.reset
+      @menu_items = GSF::MenuItems.new(
         font: Font.default,
         items: ["new game", "exit"],
         size: 32,
         text_color_focused:  TextColorFocused,
         initial_focused_index: 0
       )
+      @game_win_timer = Timer.new(GameWinDuration)
+      @game_over_text = SF::Text.new("", Font.default, 48)
+      @game_over_text.fill_color = TextColorFocused
     end
 
     def init_tiles
@@ -140,8 +175,13 @@ module MiniMonsters
 
       # this file is 0-indexed from tile_sheet_data_file json
       oil_pool_tile = json["oil_pool_tile"].as_i
-
       init_oil_pools(oil_pool_tile)
+
+      spawn_tile = json["spawn_tile"].as_i
+      init_spawns(spawn_tile)
+
+      finish_tile = json["finish_tile"].as_i
+      init_finish_area(finish_tile)
     end
 
     def init_oil_pools(oil_pool_tile)
@@ -150,6 +190,44 @@ module MiniMonsters
           @oil_pools << OilPool.new(row: row, col: col) if tile == oil_pool_tile
         end
       end
+    end
+
+    def init_spawns(spawn_tile)
+      @tiles.each_with_index do |cols, row|
+        cols.each_with_index do |tile, col|
+          @spawn_tiles << {tile, row, col} if tile == spawn_tile
+        end
+      end
+    end
+
+    def init_finish_area(finish_tile)
+      finish_tiles = [] of TileData
+
+      @tiles.each_with_index do |cols, row|
+        cols.each_with_index do |tile, col|
+          finish_tiles << {tile, row, col} if tile == finish_tile
+        end
+      end
+
+      min_row = finish_tiles.min_of { |_tile, row, _col| row }
+      max_row = finish_tiles.max_of { |_tile, row, _col| row }
+      min_col = finish_tiles.min_of { |_tile, _row, col| col }
+      max_col = finish_tiles.max_of { |_tile, _row, col| col }
+
+      rows = 1
+      cols = 1
+
+      if min_row == max_row
+        cols = max_col - min_col
+      elsif min_col == max_col
+        rows = max_row - min_row
+      else
+        raise "error: finish tiles are not either one single row or one single column"
+      end
+
+      @finish_area = Rect.new(width: cols * TileSize, height: rows * TileSize)
+      @finish_area_x = min_col * TileSize
+      @finish_area_y = min_row * TileSize
     end
 
     def init_visibilities
@@ -240,6 +318,12 @@ module MiniMonsters
         return
       end
 
+      if game_win?
+        @game_win_timer.start unless @game_win_timer.started?
+        update_game_over(frame_time, keys, joysticks) if @game_win_timer.done?
+        return
+      end
+
       oil_pools = [] of OilPool
 
       if player.moved?
@@ -284,19 +368,20 @@ module MiniMonsters
     end
 
     def update_game_over(frame_time, keys, joysticks)
-      @game_over_menu_items.update(frame_time, keys: keys, joysticks: joysticks)
+      @menu_items.update(frame_time, keys: keys, joysticks: joysticks)
 
-      # TODO: set up the game over menu
-      # if @game_over_menu_items.selected?(keys, joysticks)
-      #   case @game_over_menu_items.focused_label
-      #   when "new game"
-      #     # restart the game some how
-      #   when "exit"
-      #     @exit = true
-      #   end
-      # elsif keys.just_pressed?(Keys::Escape) || joysticks.just_pressed?(Joysticks::Back)
-      #   @exit = true
-      # end
+      if @menu_items.selected?(keys, joysticks)
+        case @menu_items.focused_label
+        when "new game"
+          # NOTE: this resets the current game (might have bugs?)
+          reset
+          init
+        when "exit"
+          @exit = true
+        end
+      elsif keys.just_pressed?(Keys::Escape) || joysticks.just_pressed?(Joysticks::Back)
+        @exit = true
+      end
     end
 
     def update_visibility
@@ -378,7 +463,7 @@ module MiniMonsters
 
       player.draw_torch_visibility(window)
 
-      draw_game_over_menu(window) if game_over?
+      draw_game_over_menu(window) if game_over? || (game_win? && @game_win_timer.done?)
 
       return unless Debug
 
@@ -387,17 +472,25 @@ module MiniMonsters
     end
 
     def draw_game_over_menu(window)
-      width = Screen.width // 2
-      height = Screen.height // 2
+      width = Screen.width // 3
+      height = Screen.height // 3
 
+      # background
       bg = SF::RectangleShape.new({width, height})
       bg.origin = {width // 2, height // 2}
       bg.position = {player.cx, player.cy}
-      bg.fill_color = SF::Color.new(0, 0, 0, 127)
+      bg.fill_color = SF::Color.new(255, 127, 0, 15)
 
       window.draw(bg)
 
-      @game_over_menu_items.draw(window, Screen.x, Screen.y)
+      # title text
+      @game_over_text.string = game_over? ? "Game Over!" : "You Won!"
+      title_x = Screen.x + Screen.width // 2 - @game_over_text.global_bounds.width / 2
+      @game_over_text.position = {title_x, Screen.y + Screen.height // 4}
+      window.draw(@game_over_text)
+
+      # menu items
+      @menu_items.draw(window, Screen.x, Screen.y)
     end
 
     def draw_collision_tiles(window)

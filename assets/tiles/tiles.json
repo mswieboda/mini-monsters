@@ -2,5 +2,7 @@
   "collidables": {
     "ranges": [[0, 23]]
   },
-  "oil_pool_tile": 23
+  "oil_pool_tile": 23,
+  "spawn_tile": 25,
+  "finish_tile": 26
 }

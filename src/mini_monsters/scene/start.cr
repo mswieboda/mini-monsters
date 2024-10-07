@@ -31,7 +31,7 @@ module MiniMonsters::Scene
         font: Font.default,
         items: items,
         size: 48,
-        text_color_focused:  TextColorFocused,
+        text_color_focused: TextColorFocused,
         initial_focused_index: 0
       )
     end

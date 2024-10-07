@@ -18,7 +18,6 @@ module MiniMonsters::Scene
 
     def init
       HUD.init
-      player.init
       level.init
       view_movement
     end
@@ -30,7 +29,7 @@ module MiniMonsters::Scene
     end
 
     def update(frame_time, keys : Keys, mouse : Mouse, joysticks : Joysticks)
-      if keys.just_pressed?(Keys::Escape)
+      if keys.just_pressed?(Keys::Escape) || level.exit?
         @exit = true
         return
       end
