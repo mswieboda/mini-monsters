@@ -16,6 +16,7 @@ module MiniMonsters
       @main = Scene::Main.new(player)
 
       @scene = start
+      @scene.reset
     end
 
     def check_scenes

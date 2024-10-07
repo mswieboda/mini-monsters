@@ -10,10 +10,12 @@ module MiniMonsters::Scene
     def initialize
       super(:start)
 
+      items = [] of String
+
       @start_scene = nil
       @items = GSF::MenuItems.new(
         font: Font.default,
-        items: ["start maze 1", "start maze 2", "exit"],
+        items: items,
         initial_focused_index: 0
       )
       @level_class = Level
@@ -21,11 +23,17 @@ module MiniMonsters::Scene
 
     def reset
       super
+      items = [] of String
+
+      items << "start maze 1"
+      items << "start maze 2"
+
+      items << "exit"
 
       @start_scene = nil
       @items = GSF::MenuItems.new(
         font: Font.default,
-        items: ["start maze 1", "start maze 2", "exit"],
+        items: items,
         initial_focused_index: 0
       )
     end
