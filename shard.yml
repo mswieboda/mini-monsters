@@ -15,7 +15,7 @@ development_dependencies:
 dependencies:
   game_sf:
     github: mswieboda/game_sf
-    version: 0.33.7
+    version: 0.33.8
 
 crystal: '>= 1.13.3'
 
