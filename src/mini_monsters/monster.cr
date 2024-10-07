@@ -5,6 +5,7 @@ module MiniMonsters
     getter sprite : SF::Sprite
     getter? following
 
+    CollisionRadius = 24
     SpriteSheet = "./assets/sprites/mouse.png"
 
     def initialize(row = 0, col = 0)
@@ -14,6 +15,10 @@ module MiniMonsters
       super
 
       @following = false
+    end
+
+    def collision_radius
+      CollisionRadius
     end
 
     def follow_range?(player : Player)

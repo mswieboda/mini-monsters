@@ -38,19 +38,19 @@ module MiniMonsters
     end
 
     def cx
-      x + collision_radius
+      collision_x + collision_radius
     end
 
     def cy
-      y + collision_radius
+      collision_y + collision_radius
     end
 
     def collision_x
-      x
+      x + (size - collision_radius * 2) / 2
     end
 
     def collision_y
-      y
+      y + (size - collision_radius * 2) / 2
     end
 
     def collision_cx
