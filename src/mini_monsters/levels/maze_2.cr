@@ -11,13 +11,13 @@ module MiniMonsters::Levels
     end
 
     def init_monsters
-      @monsters << Rat.new(row: 6, col: 6)
-      @monsters << Spider.new(row: 3, col: 3)
-      @monsters << Rat.new(row: 1, col: 1)
-      @monsters << Spider.new(row: 79, col: 0)
-      @monsters << Rat.new(row: 6, col: 8)
-      @monsters << Spider.new(row: 6, col: 3)
-      @monsters << Rat.new(row: 6, col: 1)
+      @monsters << Rat.new(row: 76, col: 36)
+      @monsters << Spider.new(row: 73, col: 33)
+      @monsters << Rat.new(row: 71, col: 31)
+      @monsters << Spider.new(row: 779, col: 30)
+      @monsters << Rat.new(row: 76, col: 38)
+      @monsters << Spider.new(row: 76, col: 33)
+      @monsters << Rat.new(row: 76, col: 31)
     end
   end
 end
