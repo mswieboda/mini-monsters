@@ -14,7 +14,7 @@ module MiniMonsters
     TorchMaxAlpha = 32
     TorchSegments = 8
     TorchSegmentDuration = 5.seconds
-    MonsterRadiusMin = 96
+    MonsterRadiusMin = 64
     MonsterRadiusMax = 256
     MonsterRadiusColor = SF::Color.new(255, 251, 0, 7)
     MonsterFollowRadius = VisibilityRadius - 128

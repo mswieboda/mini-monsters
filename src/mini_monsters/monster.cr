@@ -31,12 +31,12 @@ module MiniMonsters
       @following = true
     end
 
-    def update_following(frame_time, p_cx, p_cy, p_dist, collidable_tiles)
+    def update_following(frame_time, p_cx, p_cy, p_dist, collidable_tiles, movables)
       move_towards(p_cx, p_cy, p_dist)
 
       return if dx == 0 && dy == 0
 
-      update_movement(frame_time, collidable_tiles: collidable_tiles)
+      update_movement(frame_time, collidable_tiles: collidable_tiles, movables: movables)
     end
 
     def move_towards(p_cx, p_cy, p_dist)

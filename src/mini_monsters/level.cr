@@ -137,6 +137,21 @@ module MiniMonsters
       tiles
     end
 
+    def collidable_movables(movable : Movable)
+      @monsters.select do |monster|
+        next false if movable == monster
+
+        size = monster.size * 2
+
+        next false if movable.cx < monster.cx - size
+        next false if movable.cx > monster.cx + size
+        next false if movable.cy < monster.cy - size
+        next false if movable.cy > monster.cy + size
+
+        true
+      end
+    end
+
     def update(frame_time, keys : Keys, joysticks : Joysticks)
       if player.moved?
         @player_collidable_tiles = collidable_tiles(player)
@@ -149,9 +164,10 @@ module MiniMonsters
       player.update(frame_time, keys, joysticks, width, height, @player_collidable_tiles)
 
       monsters.select(&.following?).each do |monster|
-        collidable_tiles = collidable_tiles(monster)
+        tiles = collidable_tiles(monster)
+        movables = collidable_movables(monster)
 
-        monster.update_following(frame_time, player.cx, player.cy, player.monster_radius, collidable_tiles)
+        monster.update_following(frame_time, player.cx, player.cy, player.monster_radius, tiles, movables)
       end
 
       update_visibility if player.moved?

@@ -61,7 +61,13 @@ module MiniMonsters
       collision_y + collision_radius
     end
 
-    def update_movement(frame_time, level_width = 0, level_height = 0, collidable_tiles = [] of TileData)
+    def update_movement(
+      frame_time,
+      level_width = 0,
+      level_height = 0,
+      collidable_tiles = [] of TileData,
+      movables = [] of Movable
+    )
       @moved = false
 
       update_with_direction_and_speed(frame_time)
@@ -69,7 +75,11 @@ module MiniMonsters
 
       return if dx == 0 && dy == 0
 
-      move_with_collidables(collidable_tiles) unless collidable_tiles.empty?
+      move_with_collidable_tiles(collidable_tiles) unless collidable_tiles.empty?
+
+      return if dx == 0 && dy == 0
+
+      move_with_movables(movables) unless movables.empty?
 
       return if dx == 0 && dy == 0
 
@@ -92,7 +102,7 @@ module MiniMonsters
       end
     end
 
-    def move_with_collidables(tiles)
+    def move_with_collidable_tiles(tiles)
       t_c_box = Box.new(TileSize)
 
       tiles.each do |_tile, row, col|
@@ -106,6 +116,24 @@ module MiniMonsters
 
       tiles.each do |_tile, row, col|
         if collides?(0, dy, t_c_box, col * TileSize, row * TileSize)
+          @dy = 0
+          break
+        end
+      end
+    end
+
+    def move_with_movables(movables)
+      movables.each do |movable|
+        if collides?(dx, 0, movable)
+          @dx = 0
+          break
+        end
+      end
+
+      return if dx == 0 && dy == 0
+
+      movables.each do |movable|
+        if collides?(0, dy, movable)
           @dy = 0
           break
         end
@@ -135,12 +163,16 @@ module MiniMonsters
       collision_circle.collides?(collision_cx, collision_cy, circle, cx, cy)
     end
 
+    def collides?(dx, dy, movable : Movable)
+      collides?(dx, dy, movable.collision_circle, movable.collision_cx, movable.collision_cy)
+    end
+
     def collides?(dx, dy, box : Box, box_x, box_y)
       collision_circle.collides?(collision_cx + dx, collision_cy + dy, box, box_x, box_y)
     end
 
-    def collides?(dx, dy, circle : Circle, circle_cx, circle_cy)
-      collision_circle.collides?(collision_cx + dx, collision_cy + dy, circle, circle_cx, circle_cy)
+    def collides?(dx, dy, circle : Circle, cx, cy)
+      collision_circle.collides?(collision_cx + dx, collision_cy + dy, circle, cx, cy)
     end
 
     def draw(window : SF::RenderWindow)
