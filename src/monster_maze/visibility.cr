@@ -1,4 +1,4 @@
-module MiniMonsters
+module MonsterMaze
   FogAlpha = 191
   ColorFog = SF::Color.new(0, 0, 0, FogAlpha)
 

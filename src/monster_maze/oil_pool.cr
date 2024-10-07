@@ -1,4 +1,4 @@
-module MiniMonsters
+module MonsterMaze
   class OilPool
     getter cx : Int32
     getter cy : Int32

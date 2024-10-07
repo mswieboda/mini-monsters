@@ -1,6 +1,6 @@
 require "./stage"
 
-module MiniMonsters
+module MonsterMaze
   class Game < GSF::Game
     getter manager
 
@@ -15,7 +15,7 @@ module MiniMonsters
         style = SF::Style::Default
       {% end %}
 
-      super(title: "Mini Monsters", mode: mode, style: style)
+      super(title: "Monster Maze", mode: mode, style: style)
 
       @stage = Stage.new
     end

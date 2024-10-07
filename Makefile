@@ -1,4 +1,4 @@
-NAME=mini_monsters
+NAME=monster_maze
 SHELL = /bin/sh
 OPTS = CRYSTAL_OPTS="--link-flags=-Wl,-ld_classic"
 CC = ${OPTS} crystal build

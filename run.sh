@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 DIR=`dirname "$0"`
-NAME=mini_monsters
+NAME=monster_maze
 LIB=/usr/local/lib
 FRAMEWORKS=/Library/Frameworks
 

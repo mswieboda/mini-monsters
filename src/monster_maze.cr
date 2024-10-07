@@ -1,8 +1,8 @@
 require "game_sf"
 
-require "./mini_monsters/game"
+require "./monster_maze/game"
 
-module MiniMonsters
+module MonsterMaze
   alias Keys = GSF::Keys
   alias Mouse = GSF::Mouse
   alias Joysticks = GSF::Joysticks

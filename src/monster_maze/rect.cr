@@ -1,6 +1,6 @@
 require "./math_helpers"
 
-module MiniMonsters
+module MonsterMaze
   struct Rect
     property width : Int32
     property height : Int32

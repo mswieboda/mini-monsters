@@ -1,6 +1,6 @@
 require "./math_helpers"
 
-module MiniMonsters
+module MonsterMaze
   struct Circle
     property radius : Int32
 

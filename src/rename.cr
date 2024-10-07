@@ -1,7 +1,7 @@
 class Rename
-  ClassName = "MiniMonsters"
-  FileName = "mini_monsters"
-  DisplayName = "Mini Monsters"
+  ClassName = "MonsterMaze"
+  FileName = "monster_maze"
+  DisplayName = "Monster Maze"
   ReplaceFiles = [
     ".ameba.yml",
     "Makefile",
@@ -70,7 +70,7 @@ class Rename
     puts
     puts "Okay, lets go custom, one by one"
     puts
-    print "Rename MiniMonsters class to: "
+    print "Rename MonsterMaze class to: "
 
     @class_name = gets || ""
 

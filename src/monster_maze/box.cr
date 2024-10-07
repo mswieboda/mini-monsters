@@ -1,6 +1,6 @@
 require "./math_helpers"
 
-module MiniMonsters
+module MonsterMaze
   struct Box
     property size : Int32
 

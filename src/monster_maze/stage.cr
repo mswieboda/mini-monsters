@@ -1,7 +1,7 @@
 require "./scene/start"
 require "./scene/main"
 
-module MiniMonsters
+module MonsterMaze
   class Stage < GSF::Stage
     getter player : Player
     getter start

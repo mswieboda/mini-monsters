@@ -1,12 +1,12 @@
-name: mini_monsters
+name: monster_maze
 version: 0.1.7
 
 authors:
   - Matt Swieboda <mswieboda@users.noreply.github.com>
 
 targets:
-  mini_monsters:
-    main: src/mini_monsters.cr
+  monster_maze:
+    main: src/monster_maze.cr
 
 development_dependencies:
   ameba:

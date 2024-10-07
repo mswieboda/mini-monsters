@@ -1,7 +1,7 @@
 require "./box"
 require "./circle"
 
-module MiniMonsters
+module MonsterMaze
   class Movable
     getter x  : Int32 | Float32
     getter y : Int32 | Float32

@@ -1,6 +1,6 @@
 require "./movable"
 
-module MiniMonsters
+module MonsterMaze
   class Monster < Movable
     getter animations : GSF::Animations
     getter? following

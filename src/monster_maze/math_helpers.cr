@@ -1,4 +1,4 @@
-module MiniMonsters
+module MonsterMaze
   module MathHelpers
     extend self
 

@@ -7,7 +7,7 @@ require "./spider"
 require "./oil_pool"
 require "./rect"
 
-module MiniMonsters
+module MonsterMaze
   class Level
     getter player : Player
     getter rows : Int32

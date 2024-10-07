@@ -1,4 +1,4 @@
-# Mini Monsters
+# Monster Maze
 
 [![Ludum Dare 56](https://img.shields.io/badge/LudumDare-56-f79122?labelColor=ee5533&link=https%3A%2F%2Fldjam.com%2Fevents%2Fludum-dare%2F56)](https://ldjam.com/events/ludum-dare/56)
 
@@ -84,7 +84,7 @@ make winpack
 
 you'll need `7z` ([7zip](https://www.7-zip.org/) binary) installed ([download](https://www.7-zip.org/))
 
-zips up SFML DLLs, assets, `run.bat` (basically the .exe) to `build/mini_monsters-win.zip`
+zips up SFML DLLs, assets, `run.bat` (basically the .exe) to `build/monster_maze-win.zip`
 
 #### Mac
 
@@ -98,4 +98,4 @@ you'll need installed:
 - `7zz` ([7zip](https://www.7-zip.org/) binary) via `brew install 7zip`
 - `platypus` ([Platypus](https://sveinbjorn.org/platypus) binary) via `brew install --cask platypus` then in `Platypus > Preferences` install the command line tool
 
-zips up SFML libs, ext libs, assets, `mini_monsters.app` (created by [Platypus](https://sveinbjorn.org/platypus)) to `build/mini_monsters-mac.zip`
+zips up SFML libs, ext libs, assets, `monster_maze.app` (created by [Platypus](https://sveinbjorn.org/platypus)) to `build/monster_maze-mac.zip`

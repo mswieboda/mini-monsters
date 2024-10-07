@@ -10,16 +10,16 @@ Lint/Formatting:
   FailOnError: false
   Excluded:
   - src/rename.cr
-  - src/mini_monsters.cr
-  - src/mini_monsters/movable.cr
-  - src/mini_monsters/oil_pool.cr
-  - src/mini_monsters/tile_map.cr
-  - src/mini_monsters/rat.cr
-  - src/mini_monsters/spider.cr
-  - src/mini_monsters/player.cr
-  - src/mini_monsters/hud.cr
-  - src/mini_monsters/level.cr
-  - src/mini_monsters/monster.cr
+  - src/monster_maze.cr
+  - src/monster_maze/movable.cr
+  - src/monster_maze/oil_pool.cr
+  - src/monster_maze/tile_map.cr
+  - src/monster_maze/rat.cr
+  - src/monster_maze/spider.cr
+  - src/monster_maze/player.cr
+  - src/monster_maze/hud.cr
+  - src/monster_maze/level.cr
+  - src/monster_maze/monster.cr
   Enabled: true
   Severity: Warning
 
@@ -29,8 +29,8 @@ Documentation/DocumentationAdmonition:
   Description: Reports documentation admonitions
   Timezone: UTC
   Excluded:
-  - src/mini_monsters/level.cr
-  - src/mini_monsters/monster.cr
+  - src/monster_maze/level.cr
+  - src/monster_maze/monster.cr
   Admonitions:
   - TODO
   - FIXME

@@ -1,4 +1,4 @@
-module MiniMonsters
+module MonsterMaze
   class TileMap
     include SF::Drawable
 

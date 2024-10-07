@@ -2,7 +2,7 @@ require "../player"
 require "../level"
 require "../hud"
 
-module MiniMonsters::Scene
+module MonsterMaze::Scene
   class Main < GSF::Scene
     property level : Level
     getter player : Player

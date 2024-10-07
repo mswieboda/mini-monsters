@@ -1,7 +1,7 @@
 require "../levels/maze_1"
 require "../levels/maze_2"
 
-module MiniMonsters::Scene
+module MonsterMaze::Scene
   class Start < GSF::Scene
     getter start_scene : Symbol?
     getter items
@@ -18,7 +18,7 @@ module MiniMonsters::Scene
       @items = GSF::MenuItems.new(font: Font.default)
       @level_class = Level
 
-      @title_text = SF::Text.new("Mini Monsters", Font.default, 72)
+      @title_text = SF::Text.new("Monster Maze", Font.default, 72)
 
       title_x = Screen.x + Screen.width // 2 - @title_text.global_bounds.width / 2
       @title_text.position = {title_x, Screen.y + Screen.height // 4}
@@ -43,7 +43,7 @@ module MiniMonsters::Scene
         initial_focused_index: 0
       )
 
-      @title_text = SF::Text.new("Mini Monsters", Font.default, 72)
+      @title_text = SF::Text.new("Monster Maze", Font.default, 72)
 
       title_x = Screen.x + Screen.width // 2 - @title_text.global_bounds.width / 2
       @title_text.position = {title_x, Screen.y + Screen.height // 4}

@@ -1,6 +1,6 @@
 require "./font"
 
-module MiniMonsters
+module MonsterMaze
   class HUD
     @@action_text = SF::Text.new("", Font.default, 24)
 
