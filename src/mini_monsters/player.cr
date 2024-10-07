@@ -5,18 +5,23 @@ module MiniMonsters
     getter animations : GSF::Animations
     getter animations_flame : GSF::Animations
 
-    Size = 128
+    Size = 96
     Speed = 448
     VisibilityRadius = 512
     SpriteWidth = 96
     SpriteHeight = 128
     Sheet = "./assets/sprites/player.png"
+    FramesIdle = 1
+    FramesRun = 12
+    FramesFlamesIdle = 4
     SheetFlamesIdle = "./assets/sprites/flames_idle.png"
     SheetFlamesRun = "./assets/sprites/flames_run.png"
     AnimationDuration = 42
     TorchMaxAlpha = 32
     TorchSegments = 8
     TorchSegmentDuration = 5.seconds
+    TorchXOffset = 12
+    TorchYOffset = 16
     MonsterRadiusMin = 64
     MonsterRadiusMax = 256
     MonsterRadiusColor = SF::Color.new(255, 251, 0, 7)
@@ -26,6 +31,7 @@ module MiniMonsters
     CollisionYOffset = 96
 
     @torch_duration_alpha : Int32
+    @last_dx : Int32
 
     def initialize(row = 0, col = 0)
       super
@@ -33,40 +39,43 @@ module MiniMonsters
       @torch_duration_alpha = TorchMaxAlpha - 1
       @torch_segment_timer = Timer.new(TorchSegmentDuration)
       @torch_segment_timer.start
+      @last_dx = 0
 
-      # player animations
-      idle = GSF::Animation.new(loops: true)
-      idle.add(Sheet, 0, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
+      @animations = GSF::Animations.new(:idle_left)
+      @animations_flame = GSF::Animations.new(:idle_flame_left)
 
-      frames_run = 12
-      run = GSF::Animation.new(loops: true)
+      init_animations
+    end
 
-      frames_run.times do |i|
-        run.add(Sheet, i * SpriteWidth, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
+    def init_animations
+      add_animation(Sheet, animations, :idle_left, FramesIdle, loops: false)
+      add_animation(Sheet, animations, :idle_right, FramesIdle, loops: false, flip_horizontal: true)
+
+      add_animation(Sheet, animations, :run_left, FramesRun)
+      add_animation(Sheet, animations, :run_right, FramesRun, flip_horizontal: true)
+
+      add_animation(SheetFlamesIdle, animations_flame, :idle_flame_left, FramesFlamesIdle)
+      add_animation(SheetFlamesIdle, animations_flame, :idle_flame_right, FramesFlamesIdle, flip_horizontal: true)
+
+      add_animation(SheetFlamesRun, animations_flame, :run_flame_left, FramesRun)
+      add_animation(SheetFlamesRun, animations_flame, :run_flame_right, FramesRun, flip_horizontal: true)
+    end
+
+    def add_animation(sheet, animations, name, frames, loops = true, flip_horizontal = false)
+      animation = GSF::Animation.new(loops)
+
+      frames.times do |i|
+        animation.add(
+          filename: sheet,
+          x: i * SpriteWidth,
+          y: 0,
+          width: SpriteWidth,
+          height: SpriteHeight,
+          duration_ms: AnimationDuration
+        )
       end
 
-      @animations = GSF::Animations.new(:idle_left, idle)
-      # animations.add(:idle_right, idle, flip_horizontal: true)
-      animations.add(:run_left, run)
-      animations.add(:run_right, run, flip_horizontal: true)
-
-      # flame animations
-      frames_idle_flame = 4
-      idle_flame = GSF::Animation.new(loops: true)
-      idle_flame.add(SheetFlamesIdle, 0, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
-
-      frames_idle_flame.times do |i|
-        idle_flame.add(SheetFlamesIdle, i * SpriteWidth, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
-      end
-
-      run_flame = GSF::Animation.new(loops: true)
-
-      frames_run.times do |i|
-        run_flame.add(SheetFlamesRun, i * SpriteWidth, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
-      end
-
-      @animations_flame = GSF::Animations.new(:idle_flame_left, idle_flame)
-      animations_flame.add(:run_flame_left, run_flame)
+      animations.add(name, animation, flip_horizontal: flip_horizontal)
     end
 
     def size
@@ -102,11 +111,15 @@ module MiniMonsters
     end
 
     def torch_cx
-      x + 12
+      if @last_dx <= 0
+        x + TorchXOffset
+      else
+        x + Size - TorchXOffset
+      end
     end
 
     def torch_cy
-      y + 16
+      y + TorchYOffset
     end
 
     def torch_left_percent
@@ -153,14 +166,21 @@ module MiniMonsters
       @dy += 1 if keys.pressed?([Keys::S]) || joysticks.left_stick_moved_down? || joysticks.d_pad_moved_down?
     end
 
+    def move(dx, dy)
+      super(dx, dy)
+
+      @last_dx = dx.sign if dx.abs > 0
+    end
+
     def play_animations
-      # TODO: use run_right and idle_right too, based on last movement
-      if dx.abs > 0 || dy.abs > 0
-        animations.play(:run_left)
-        animations_flame.play(:run_flame_left)
+      run = dx.abs > 0 || dy.abs > 0
+
+      if @last_dx > 0
+        animations.play(run ? :run_right : :idle_right)
+        animations_flame.play(run ? :run_flame_right : :idle_flame_right)
       else
-        animations.play(:idle_left)
-        animations_flame.play(:idle_flame_left)
+        animations.play(run ? :run_left : :idle_left)
+        animations_flame.play(run ? :run_flame_left : :idle_flame_left)
       end
     end
 

@@ -248,11 +248,12 @@ module MiniMonsters
       pvx = player.torch_cx - player.visibility_radius
       pvy = player.torch_cy - player.visibility_radius
       size = player.visibility_radius * 2
+      offset = 2 # extra offset b/c when player flips horz its a lot more tiles
 
-      min_row = (pvy // tile_size - 1).clamp(0, rows - 1).to_i
-      min_col = (pvx // tile_size - 1).clamp(0, cols - 1).to_i
-      max_row = (((pvy + size) // tile_size) + 1).clamp(0, rows - 1).to_i
-      max_col = (((pvx + size) // tile_size) + 1).clamp(0, cols - 1).to_i
+      min_row = (pvy // tile_size - offset).clamp(0, rows - 1).to_i
+      min_col = (pvx // tile_size - offset).clamp(0, cols - 1).to_i
+      max_row = (((pvy + size) // tile_size) + offset).clamp(0, rows - 1).to_i
+      max_col = (((pvx + size) // tile_size) + offset).clamp(0, cols - 1).to_i
 
       # check these tiles against player visibility circle
       (min_row..max_row).each do |row|
