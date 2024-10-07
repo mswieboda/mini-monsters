@@ -21,7 +21,7 @@ module MonsterMaze::Scene
       @title_text = SF::Text.new("Monster Maze", Font.default, 72)
 
       title_x = Screen.x + Screen.width // 2 - @title_text.global_bounds.width / 2
-      @title_text.position = {title_x, Screen.y + Screen.height // 4}
+      @title_text.position = {title_x, Screen.y + Screen.height // 6}
       @title_text.fill_color = TextColorFocused
     end
 
@@ -46,7 +46,7 @@ module MonsterMaze::Scene
       @title_text = SF::Text.new("Monster Maze", Font.default, 72)
 
       title_x = Screen.x + Screen.width // 2 - @title_text.global_bounds.width / 2
-      @title_text.position = {title_x, Screen.y + Screen.height // 4}
+      @title_text.position = {title_x, Screen.y + Screen.height // 6}
       @title_text.fill_color = TextColorFocused
     end
 
