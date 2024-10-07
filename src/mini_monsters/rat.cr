@@ -6,7 +6,6 @@ module MiniMonsters
 
     SpriteSheet = "./assets/sprites/rat.png"
     Frames = 3
-    AnimationDuration = 50
 
     def initialize(row = 0, col = 0)
       super
@@ -42,8 +41,7 @@ module MiniMonsters
           x: i * size,
           y: row * size,
           width: size,
-          height: size,
-          duration_ms: AnimationDuration
+          height: size
         )
       end
 
@@ -62,7 +60,6 @@ module MiniMonsters
         elsif dy > 0
           animations.play(:move_down)
         else
-          # TODO: sometimes this causes the animations to get stuck, fix, or remove
           animations.pause
         end
       elsif dx < 0

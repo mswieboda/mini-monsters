@@ -56,6 +56,8 @@ module MiniMonsters
 
     def move_change_from_distance(p_value, value, p_dist, inner_threshold)
       dist = p_value - value
+
+      # TODO: this `- inner_threshold` is wrong, needs to be +/- range depending on direction
       dist.abs > p_dist ? dist.sign : dist.abs < p_dist - inner_threshold ? -dist.sign : 0
     end
 
