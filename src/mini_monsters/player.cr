@@ -3,6 +3,7 @@ require "./movable"
 module MiniMonsters
   class Player < Movable
     getter animations : GSF::Animations
+    getter animations_flame : GSF::Animations
 
     Size = 128
     Speed = 448
@@ -10,10 +11,12 @@ module MiniMonsters
     SpriteWidth = 96
     SpriteHeight = 128
     Sheet = "./assets/sprites/player.png"
+    SheetFlamesIdle = "./assets/sprites/flames_idle.png"
+    SheetFlamesRun = "./assets/sprites/flames_run.png"
     AnimationDuration = 42
     TorchMaxAlpha = 32
     TorchSegments = 8
-    TorchSegmentDuration = 5.seconds
+    TorchSegmentDuration = 1.seconds
     MonsterRadiusMin = 64
     MonsterRadiusMax = 256
     MonsterRadiusColor = SF::Color.new(255, 251, 0, 7)
@@ -27,24 +30,43 @@ module MiniMonsters
     def initialize(row = 0, col = 0)
       super
 
+      @torch_duration_alpha = TorchMaxAlpha - 1
+      @torch_segment_timer = Timer.new(TorchSegmentDuration)
+      @torch_segment_timer.start
+
+      # player animations
       idle = GSF::Animation.new(loops: true)
       idle.add(Sheet, 0, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
 
-      run_frames = 12
+      frames_run = 12
       run = GSF::Animation.new(loops: true)
 
-      run_frames.times do |i|
+      frames_run.times do |i|
         run.add(Sheet, i * SpriteWidth, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
       end
 
       @animations = GSF::Animations.new(:idle_left, idle)
-      animations.add(:idle_right, idle, flip_horizontal: true)
+      # animations.add(:idle_right, idle, flip_horizontal: true)
       animations.add(:run_left, run)
       animations.add(:run_right, run, flip_horizontal: true)
 
-      @torch_duration_alpha = TorchMaxAlpha - 1
-      @torch_segment_timer = Timer.new(TorchSegmentDuration)
-      @torch_segment_timer.start
+      # flame animations
+      frames_idle_flame = 4
+      idle_flame = GSF::Animation.new(loops: true)
+      idle_flame.add(SheetFlamesIdle, 0, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
+
+      frames_idle_flame.times do |i|
+        idle_flame.add(SheetFlamesIdle, i * SpriteWidth, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
+      end
+
+      run_flame = GSF::Animation.new(loops: true)
+
+      frames_run.times do |i|
+        run_flame.add(SheetFlamesRun, i * SpriteWidth, 0, SpriteWidth, SpriteHeight, duration_ms: AnimationDuration)
+      end
+
+      @animations_flame = GSF::Animations.new(:idle_flame_left, idle_flame)
+      animations_flame.add(:run_flame_left, run_flame)
     end
 
     def size
@@ -84,7 +106,7 @@ module MiniMonsters
     end
 
     def torch_cy
-      y + 38
+      y + 16
     end
 
     def torch_left_percent
@@ -108,8 +130,9 @@ module MiniMonsters
       update_movement_dx_input(keys, joysticks)
       update_movement_dy_input(keys, joysticks)
       update_movement(frame_time, level_width, level_height, collidable_tiles)
-      play_animation
+      play_animations
       animations.update(frame_time)
+      animations_flame.update(frame_time)
       update_torch_segements
     end
 
@@ -127,12 +150,14 @@ module MiniMonsters
       @dy += 1 if keys.pressed?([Keys::S]) || joysticks.left_stick_moved_down? || joysticks.d_pad_moved_down?
     end
 
-    def play_animation
+    def play_animations
       # TODO: use run_right and idle_right too, based on last movement
       if dx.abs > 0 || dy.abs > 0
         animations.play(:run_left)
+        animations_flame.play(:run_flame_left)
       else
         animations.play(:idle_left)
+        animations_flame.play(:idle_flame_left)
       end
     end
 
@@ -161,7 +186,14 @@ module MiniMonsters
 
       animations.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2)
 
+      draw_flame(window) if @torch_duration_alpha > 0
       draw_player_borders(window) if Debug
+    end
+
+    def draw_flame(window)
+      flame_color = SF::Color.new(255, 255, 255, 256 - (TorchMaxAlpha - @torch_duration_alpha))
+
+      animations_flame.draw(window, x + SpriteWidth / 2, y + SpriteHeight / 2, color: flame_color)
     end
 
     def draw_player_borders(window)

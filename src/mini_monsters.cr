@@ -14,7 +14,7 @@ module MiniMonsters
   alias VisibilityData = Tuple(Visibility, Int32, Int32) # v, row, col
 
   TileSize = 64
-  Debug = true
+  Debug = false
 
   Game.new.run
 end
