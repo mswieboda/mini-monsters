@@ -7,6 +7,8 @@ module MiniMonsters::Scene
     getter items
     getter level_class
 
+    @title_text : SF::Text
+
     TextColorFocused = SF::Color.new(255, 127, 0) # orange
 
     def initialize
@@ -15,6 +17,12 @@ module MiniMonsters::Scene
       @start_scene = nil
       @items = GSF::MenuItems.new(font: Font.default)
       @level_class = Level
+
+      @title_text = SF::Text.new("Mini Monsters", Font.default, 72)
+
+      title_x = Screen.x + Screen.width // 2 - @title_text.global_bounds.width / 2
+      @title_text.position = {title_x, Screen.y + Screen.height // 4}
+      @title_text.fill_color = TextColorFocused
     end
 
     def reset
@@ -34,6 +42,12 @@ module MiniMonsters::Scene
         text_color_focused: TextColorFocused,
         initial_focused_index: 0
       )
+
+      @title_text = SF::Text.new("Mini Monsters", Font.default, 72)
+
+      title_x = Screen.x + Screen.width // 2 - @title_text.global_bounds.width / 2
+      @title_text.position = {title_x, Screen.y + Screen.height // 4}
+      @title_text.fill_color = TextColorFocused
     end
 
     def update(frame_time, keys : Keys, mouse : Mouse, joysticks : Joysticks)
@@ -56,6 +70,8 @@ module MiniMonsters::Scene
     end
 
     def draw(window : SF::RenderWindow)
+      window.draw(@title_text)
+
       items.draw(window)
     end
   end
