@@ -130,9 +130,12 @@ module MiniMonsters
       update_movement_dx_input(keys, joysticks)
       update_movement_dy_input(keys, joysticks)
       update_movement(frame_time, level_width, level_height, collidable_tiles)
+
       play_animations
+
       animations.update(frame_time)
       animations_flame.update(frame_time)
+
       update_torch_segements
     end
 
@@ -172,6 +175,10 @@ module MiniMonsters
           @torch_segment_timer.restart
         end
       end
+    end
+
+    def torch_refill!
+      @torch_duration_alpha = TorchMaxAlpha - 1
     end
 
     def jump_to_tile(row, col)

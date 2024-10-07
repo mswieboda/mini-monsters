@@ -1,0 +1,6 @@
+{
+  "collidables": {
+    "ranges": [[0, 23]]
+  },
+  "oil_pool_tile": 23
+}

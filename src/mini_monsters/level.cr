@@ -2,6 +2,7 @@ require "json"
 require "./tile_map"
 require "./visibility"
 require "./monster"
+require "./oil_pool"
 
 module MiniMonsters
   class Level
@@ -10,17 +11,23 @@ module MiniMonsters
     getter cols : Int32
     getter tiles : Array(Array(Int32))
     getter monsters : Array(Monster)
+    getter oil_pools : Array(OilPool)
+    getter sound : SF::Sound
 
     @visibilities : Array(Array(Visibility))
     @tile_map : TileMap
     @collidable_tile_types : Array(Int32)
     @player_collidable_tiles : Array(TileData)
+    @sound_buffer_oil_dip : SF::SoundBuffer
+    @oil_fill_sprite : SF::Sprite
 
     VisibilitySize = 16
     VisibilitySizeFactor = TileSize // VisibilitySize
     EmptyString = ""
-    TileSheetFile = "./assets/tiles.png"
-    TileSheetDataFile = "./assets/tiles.json"
+    TileSheetFile = "./assets/tiles/tiles.png"
+    TileSheetDataFile = "./assets/tiles/tiles.json"
+    OilFillSheetFile = "./assets/tiles/oil_fill.png"
+    SoundOilDip = "./assets/sounds/oil_dip.ogg"
 
     def initialize(@player : Player, @rows = 1, @cols = 1)
       @tile_map = TileMap.new
@@ -29,6 +36,10 @@ module MiniMonsters
       @visibilities = [] of Array(Visibility)
       @collidable_tile_types = [] of Int32
       @player_collidable_tiles = [] of TileData
+      @oil_pools = [] of OilPool
+      @sound = SF::Sound.new
+      @sound_buffer_oil_dip = SF::SoundBuffer.new
+      @oil_fill_sprite = SF::Sprite.new
     end
 
     def tile_size
@@ -55,6 +66,9 @@ module MiniMonsters
       init_tiles
       init_visibilities
       init_monsters
+      init_sounds
+      init_sprites
+
       update_visibility
     end
 
@@ -87,15 +101,30 @@ module MiniMonsters
 
       return if tile_sheet_data_file.empty?
 
-      # sets tiles that are collidable from json
       json = JSON.parse(File.open(tile_sheet_data_file))
 
+      # sets tiles that are collidable from tile_sheet_data_file json
       if raw_ranges = json.dig("collidables", "ranges")
+        # this file is 0-indexed
         ranges = raw_ranges.as_a.map(&.as_a.map(&.as_i))
 
         ranges.each do |range|
           min, max = range
+
           @collidable_tile_types += (min..max).to_a
+        end
+      end
+
+      # this file is 0-indexed from tile_sheet_data_file json
+      oil_pool_tile = json["oil_pool_tile"].as_i
+
+      init_oil_pools(oil_pool_tile)
+    end
+
+    def init_oil_pools(oil_pool_tile)
+      @tiles.each_with_index do |cols, row|
+        cols.each_with_index do |tile, col|
+          @oil_pools << OilPool.new(row: row, col: col) if tile == oil_pool_tile
         end
       end
     end
@@ -108,7 +137,22 @@ module MiniMonsters
     def init_monsters
     end
 
-    def collidable_tiles(movable : Movable)
+    def init_sounds
+      @sound_buffer_oil_dip = SF::SoundBuffer.from_file(SoundOilDip)
+    end
+
+    def init_sprites
+      texture = SF::Texture.from_file(OilFillSheetFile, SF::IntRect.new(0, 0, tile_size, tile_size))
+
+      @oil_fill_sprite = SF::Sprite.new(texture)
+    end
+
+    def play_sound(buffer : SF::SoundBuffer)
+      @sound.buffer = buffer
+      @sound.play
+    end
+
+    def close_collidable_tiles(movable : Movable)
       tiles = [] of TileData
 
       size = movable.collision_radius * 2
@@ -137,7 +181,7 @@ module MiniMonsters
       tiles
     end
 
-    def collidable_movables(movable : Movable)
+    def close_collidable_movables(movable : Movable)
       @monsters.select do |monster|
         next false if movable == monster
 
@@ -152,9 +196,27 @@ module MiniMonsters
       end
     end
 
+    def close_oil_pools(movable : Movable)
+      @oil_pools.select do |oil_pool|
+        next false if oil_pool.empty?
+
+        size = oil_pool.radius * 2
+
+        next false if movable.cx < oil_pool.cx - size
+        next false if movable.cx > oil_pool.cx + size
+        next false if movable.cy < oil_pool.cy - size
+        next false if movable.cy > oil_pool.cy + size
+
+        true
+      end
+    end
+
     def update(frame_time, keys : Keys, joysticks : Joysticks)
+      oil_pools = [] of OilPool
+
       if player.moved?
-        @player_collidable_tiles = collidable_tiles(player)
+        @player_collidable_tiles = close_collidable_tiles(player)
+        oil_pools = close_oil_pools(player)
 
         @monsters
           .select(&.follow_range?(player))
@@ -163,9 +225,17 @@ module MiniMonsters
 
       player.update(frame_time, keys, joysticks, width, height, @player_collidable_tiles)
 
+      oil_pools.each do |oil_pool|
+        if player.collides?(Circle.new(oil_pool.radius), oil_pool.cx, oil_pool.cy)
+          play_sound(@sound_buffer_oil_dip)
+          oil_pool.dip!
+          player.torch_refill!
+        end
+      end
+
       monsters.select(&.following?).each do |monster|
-        tiles = collidable_tiles(monster)
-        movables = collidable_movables(monster)
+        tiles = close_collidable_tiles(monster)
+        movables = close_collidable_movables(monster)
 
         monster.update_following(frame_time, player.cx, player.cy, player.monster_radius, tiles, movables)
       end
@@ -242,6 +312,8 @@ module MiniMonsters
       window.draw(@tile_map)
 
       monsters.each(&.draw(window))
+
+      oil_pools.each(&.draw(window, @oil_fill_sprite))
 
       player.draw(window)
 
