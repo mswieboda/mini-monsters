@@ -4,7 +4,7 @@ module MiniMonsters
   class Rat < Monster
     SpriteSheet = "./assets/sprites/rat.png"
     AnimationFrames = 3
-    Speed = 384
+    Speed = 400
 
     def sprite_sheet
       SpriteSheet

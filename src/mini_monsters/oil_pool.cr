@@ -5,7 +5,7 @@ module MiniMonsters
 
     MaxOilAlpha = 255
     EmptyThreshold = 0.75
-    ActionRadius = 112
+    ActionRadius = 64
     ActiveRefreshTime = 10.seconds # filled at EmptyThreshold %, so 7.5 sec)
 
     def initialize(row, col)

@@ -9,7 +9,7 @@ module MiniMonsters
     getter death_timer : Timer
 
     Size = 96
-    Speed = 448
+    Speed = 352
     VisibilityRadius = 512
     SpriteWidth = 96
     SpriteHeight = 128
