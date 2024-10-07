@@ -1,5 +1,6 @@
 require "../level"
 require "../rat"
+require "../spider"
 
 module MiniMonsters::Levels
   class Maze1 < MiniMonsters::Level
@@ -11,11 +12,11 @@ module MiniMonsters::Levels
 
     def init_monsters
       @monsters << Rat.new(row: 86, col: 36)
-      @monsters << Rat.new(row: 83, col: 33)
+      @monsters << Spider.new(row: 83, col: 33)
       @monsters << Rat.new(row: 81, col: 31)
-      @monsters << Rat.new(row: 79, col: 30)
+      @monsters << Spider.new(row: 79, col: 30)
       @monsters << Rat.new(row: 86, col: 38)
-      @monsters << Rat.new(row: 86, col: 33)
+      @monsters << Spider.new(row: 86, col: 33)
       @monsters << Rat.new(row: 86, col: 31)
     end
   end

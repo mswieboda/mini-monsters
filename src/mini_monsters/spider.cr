@@ -1,10 +1,10 @@
 require "./monster"
 
 module MiniMonsters
-  class Rat < Monster
-    SpriteSheet = "./assets/sprites/rat.png"
-    AnimationFrames = 3
-    Speed = 384
+  class Spider < Monster
+    SpriteSheet = "./assets/sprites/spider.png"
+    AnimationFrames = 4
+    Speed = 416
 
     def sprite_sheet
       SpriteSheet
