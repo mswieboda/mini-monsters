@@ -20,6 +20,7 @@ module MiniMonsters
     @player_collidable_tiles : Array(TileData)
     @sound_buffer_oil_dip : SF::SoundBuffer
     @oil_fill_sprite : SF::Sprite
+    @game_over_menu_items : GSF::MenuItems
 
     VisibilitySize = 16
     VisibilitySizeFactor = TileSize // VisibilitySize
@@ -28,6 +29,7 @@ module MiniMonsters
     TileSheetDataFile = "./assets/tiles/tiles.json"
     OilFillSheetFile = "./assets/tiles/oil_fill.png"
     SoundOilDip = "./assets/sounds/oil_dip.ogg"
+    TextColorFocused = SF::Color.new(255, 127, 0)
 
     def initialize(@player : Player, @rows = 1, @cols = 1)
       @tile_map = TileMap.new
@@ -40,6 +42,13 @@ module MiniMonsters
       @sound = SF::Sound.new
       @sound_buffer_oil_dip = SF::SoundBuffer.new
       @oil_fill_sprite = SF::Sprite.new
+      @game_over_menu_items = GSF::MenuItems.new(
+        font: Font.default,
+        items: ["new game", "exit"],
+        size: 32,
+        text_color_focused:  TextColorFocused,
+        initial_focused_index: 0
+      )
     end
 
     def tile_size
@@ -62,16 +71,6 @@ module MiniMonsters
       cols * VisibilitySizeFactor
     end
 
-    def init
-      init_tiles
-      init_visibilities
-      init_monsters
-      init_sounds
-      init_sprites
-
-      update_visibility
-    end
-
     def tile_map_file
       EmptyString
     end
@@ -82,6 +81,30 @@ module MiniMonsters
 
     def tile_sheet_data_file
       TileSheetDataFile
+    end
+
+    def game_over?
+      player.dead? && player.death_timer.done?
+    end
+
+    def init
+      init_tiles
+      init_visibilities
+      init_monsters
+      init_sounds
+      init_sprites
+
+      update_visibility
+    end
+
+    def reset
+      @game_over_menu_items = GSF::MenuItems.new(
+        font: Font.default,
+        items: ["new game", "exit"],
+        size: 32,
+        text_color_focused:  TextColorFocused,
+        initial_focused_index: 0
+      )
     end
 
     def init_tiles
@@ -212,6 +235,11 @@ module MiniMonsters
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks)
+      if game_over?
+        update_game_over(frame_time, keys, joysticks)
+        return
+      end
+
       oil_pools = [] of OilPool
 
       if player.moved?
@@ -249,15 +277,26 @@ module MiniMonsters
           player.take_damage(monster.damage)
 
           # TODO: play grunt / hit sound
-
-          if player.dead? && player.death_timer.done?
-            # TODO:
-            #  - display game over menu
-          end
         end
       end
 
       update_visibility if player.moved?
+    end
+
+    def update_game_over(frame_time, keys, joysticks)
+      @game_over_menu_items.update(frame_time, keys: keys, joysticks: joysticks)
+
+      # TODO: set up the game over menu
+      # if @game_over_menu_items.selected?(keys, joysticks)
+      #   case @game_over_menu_items.focused_label
+      #   when "new game"
+      #     # restart the game some how
+      #   when "exit"
+      #     @exit = true
+      #   end
+      # elsif keys.just_pressed?(Keys::Escape) || joysticks.just_pressed?(Joysticks::Back)
+      #   @exit = true
+      # end
     end
 
     def update_visibility
@@ -339,10 +378,26 @@ module MiniMonsters
 
       player.draw_torch_visibility(window)
 
+      draw_game_over_menu(window) if game_over?
+
       return unless Debug
 
       draw_collision_tiles(window)
       player.draw_monster_follow_radius(window)
+    end
+
+    def draw_game_over_menu(window)
+      width = Screen.width // 2
+      height = Screen.height // 2
+
+      bg = SF::RectangleShape.new({width, height})
+      bg.origin = {width // 2, height // 2}
+      bg.position = {player.cx, player.cy}
+      bg.fill_color = SF::Color.new(0, 0, 0, 127)
+
+      window.draw(bg)
+
+      @game_over_menu_items.draw(window, Screen.x, Screen.y)
     end
 
     def draw_collision_tiles(window)

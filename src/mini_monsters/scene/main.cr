@@ -23,6 +23,12 @@ module MiniMonsters::Scene
       view_movement
     end
 
+    def reset
+      super
+
+      level.reset
+    end
+
     def update(frame_time, keys : Keys, mouse : Mouse, joysticks : Joysticks)
       if keys.just_pressed?(Keys::Escape)
         @exit = true

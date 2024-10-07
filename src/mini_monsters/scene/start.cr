@@ -7,17 +7,13 @@ module MiniMonsters::Scene
     getter items
     getter level_class
 
+    TextColorFocused = SF::Color.new(255, 127, 0) # orange
+
     def initialize
       super(:start)
 
-      items = [] of String
-
       @start_scene = nil
-      @items = GSF::MenuItems.new(
-        font: Font.default,
-        items: items,
-        initial_focused_index: 0
-      )
+      @items = GSF::MenuItems.new(font: Font.default)
       @level_class = Level
     end
 
@@ -34,6 +30,8 @@ module MiniMonsters::Scene
       @items = GSF::MenuItems.new(
         font: Font.default,
         items: items,
+        size: 48,
+        text_color_focused:  TextColorFocused,
         initial_focused_index: 0
       )
     end

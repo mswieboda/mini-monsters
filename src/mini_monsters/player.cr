@@ -150,6 +150,10 @@ module MiniMonsters
     def init
       @torch_duration_alpha = TorchMaxAlpha - 1
       @torch_segment_timer.start
+      @last_dx = 0
+      @health = MaxHealth
+      @dead = false
+      @death_timer.stop
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height, collidable_tiles : Tiles)
