@@ -257,6 +257,7 @@ module MonsterMaze
     def init_sounds
       @sound_buffer_oil_dip = SF::SoundBuffer.from_file(SoundOilDip)
       @sound_oil_dip = SF::Sound.new(@sound_buffer_oil_dip)
+      @sound_oil_dip.volume = 30
 
       @sound_buffer_footsteps = SF::SoundBuffer.from_file(SoundFootsteps)
       @sound_footsteps = SF::Sound.new(@sound_buffer_footsteps)
