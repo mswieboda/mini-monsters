@@ -45,20 +45,13 @@ module MiniMonsters
     end
 
     def move_towards(p_cx, p_cy, p_dist)
-      dist_x = p_cx - cx
-      dist_y = p_cy - cy
+      @dx = move_change_from_distance(p_cx, cx, p_dist, size)
+      @dy = move_change_from_distance(p_cy, cy, p_dist, size)
+    end
 
-      if dist_x.abs > p_dist
-        @dx = dist_x.sign
-      else
-        @dx = 0
-      end
-
-      if dist_y.abs > p_dist
-        @dy = dist_y.sign
-      else
-        @dy = 0
-      end
+    def move_change_from_distance(p_value, value, p_dist, inner_threshold)
+      dist = p_value - value
+      dist.abs > p_dist ? dist.sign : dist.abs < p_dist - inner_threshold ? -dist.sign : 0
     end
 
     def jump(x, y)
