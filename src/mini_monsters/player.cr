@@ -5,7 +5,7 @@ module MiniMonsters
     getter animations : GSF::Animations
 
     Size = 128
-    Speed = 512
+    Speed = 448
     VisibilityRadius = 512
     SpriteWidth = 96
     SpriteHeight = 128

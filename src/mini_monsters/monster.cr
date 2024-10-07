@@ -2,19 +2,19 @@ require "./movable"
 
 module MiniMonsters
   class Monster < Movable
-    getter sprite : SF::Sprite
     getter? following
 
     CollisionRadius = 24
-    SpriteSheet = "./assets/sprites/mouse.png"
+    Speed = 416
 
     def initialize(row = 0, col = 0)
-      texture = SF::Texture.from_file(SpriteSheet, SF::IntRect.new(0, 0, size, size))
-      @sprite = SF::Sprite.new(texture)
-
       super
 
       @following = false
+    end
+
+    def speed
+      Speed
     end
 
     def collision_radius
@@ -54,18 +54,7 @@ module MiniMonsters
       dist.abs > p_dist ? dist.sign : dist.abs < p_dist - inner_threshold ? -dist.sign : 0
     end
 
-    def jump(x, y)
-      super
-
-      @sprite.position = {x, y}
-    end
-
     def draw(window : SF::RenderWindow)
-      window.draw(sprite)
-
-      return unless Debug
-
-      collision_circle.draw(window, collision_cx, collision_cy)
     end
   end
 end
