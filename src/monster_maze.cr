@@ -14,7 +14,7 @@ module MonsterMaze
   alias VisibilityData = Tuple(Visibility, Int32, Int32) # v, row, col
 
   TileSize = 64
-  Debug = false
+  Debug = true
 
   Game.new.run
 end

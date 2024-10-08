@@ -7,6 +7,7 @@ module MonsterMaze
     getter? attacking
     getter? attacked
     getter next_attack_timer : Timer
+    getter path : Array(GSF::Path::Cell)
 
     CollisionRadius = 16
     Speed = 256
@@ -24,6 +25,7 @@ module MonsterMaze
       @attacking = false
       @attacked = false
       @next_attack_timer = Timer.new(NextAttackDurationMax.milliseconds, true)
+      @path = [] of GSF::Path::Cell
 
       # animations
       idle_right = GSF::Animation.new
@@ -96,8 +98,14 @@ module MonsterMaze
       collides?(Circle.new(player.monster_follow_radius), player.torch_cx, player.torch_cy)
     end
 
-    def follow_player!
+    def follow_player!(player : Player, tiles : GSF::Path::Tiles)
       @following = true
+
+      # make path to player
+      entity = {row: (cy // TileSize).to_i, col: (cx // TileSize).to_i}
+      target = {row: (player.cy // TileSize).to_i, col: (player.cx // TileSize).to_i}
+
+      @path = GSF::Path.find(entity, target, tiles)
     end
 
     def ready_to_attack?

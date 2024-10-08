@@ -19,6 +19,8 @@ module MonsterMaze
 
     @visibilities : Array(Array(Visibility))
     @tile_map : TileMap
+    @tiles : Array(Array(Int32))
+    @tiles_as_cells : Array(Array(GSF::Path::Tile))
     @collidable_tile_types : Array(Int32)
     @player_collidable_tiles : Array(TileData)
     @sound_buffer_oil_dip : SF::SoundBuffer
@@ -51,6 +53,7 @@ module MonsterMaze
     def initialize(@player : Player, @rows = 1, @cols = 1)
       @tile_map = TileMap.new
       @tiles = [] of Array(Int32)
+      @tiles_as_cells = [] of Array(GSF::Path::Tile)
       @monsters = [] of Monster
       @visibilities = [] of Array(Visibility)
       @collidable_tile_types = [] of Int32
@@ -185,6 +188,13 @@ module MonsterMaze
         end
       end
 
+      # converts @tiles to Array((Array(GSF::Path::Tile))
+      @tiles_as_cells = @tiles.map do |cols|
+        cols.map do |tile|
+          @collidable_tile_types.includes?(tile) ? GSF::Path::Tile::Collidable : GSF::Path::Tile::Empty
+        end
+      end
+
       # this file is 0-indexed from tile_sheet_data_file json
       oil_pool_tile = json["oil_pool_tile"].as_i
       init_oil_pools(oil_pool_tile)
@@ -211,7 +221,7 @@ module MonsterMaze
         end
       end
 
-      @spawn_tiles.each do |tile, row, col|
+      @spawn_tiles.each do |_tile, row, col|
         spawn_monster(row, col)
       end
     end
@@ -367,7 +377,7 @@ module MonsterMaze
 
         @monsters
           .select(&.follow_range?(player))
-          .each(&.follow_player!)
+          .each(&.follow_player!(player, @tiles_as_cells))
 
         play_sound(@sound_footsteps)
       else
@@ -498,16 +508,17 @@ module MonsterMaze
 
       player.draw(window)
 
+      if Debug
+        draw_collision_tiles(window)
+        monsters.each { |monster| draw_monster_path(window, monster.path) }
+        player.draw_monster_follow_radius(window)
+      end
+
       draw_visibility(window)
 
       player.draw_torch_visibility(window)
 
       draw_game_over_menu(window) if game_over? || (game_win? && @game_win_timer.done?)
-
-      return unless Debug
-
-      draw_collision_tiles(window)
-      player.draw_monster_follow_radius(window)
     end
 
     def draw_game_over_menu(window)
@@ -542,6 +553,50 @@ module MonsterMaze
         rectangle.position = {col * tile_size, row * tile_size}
 
         window.draw(rectangle)
+      end
+    end
+
+    def draw_monster_path(window, path : GSF::Path::Cells)
+      # circle
+      radius = 4
+      circle = SF::CircleShape.new(radius)
+      circle.origin = {radius, radius}
+      circle.fill_color = SF::Color::Transparent
+      circle.outline_color = SF::Color::Magenta
+      circle.outline_thickness = 2
+
+      # line
+      height = 4
+      rectangle = SF::RectangleShape.new
+      rectangle.origin = {0, height // 2}
+      rectangle.fill_color = SF::Color::Transparent
+      rectangle.outline_color = SF::Color::Magenta
+      rectangle.outline_thickness = 2
+
+      last_path_cell = nil
+
+      path.each do |cell|
+        cx = cell[:col] * TileSize + TileSize // 2
+        cy = cell[:row] * TileSize + TileSize // 2
+
+        circle.position = {cx, cy}
+        window.draw(circle)
+
+        if last_cell = last_path_cell
+          last_cell_cx = last_cell[:col] * TileSize
+          last_cell_cy = last_cell[:row] * TileSize
+          width = MathHelpers.distance(cx, cy, last_cell_cx, last_cell_cy)
+
+          rectangle.size = {width, height}
+          rectangle.position = {cx, cy}
+          # TODO: calc rotation
+          # theta = 0
+          # rectangle.rotation = theta
+
+          # window.draw(rectangle)
+        end
+
+        last_path_cell = cell
       end
     end
 
