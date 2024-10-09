@@ -103,7 +103,7 @@ module MonsterMaze
 
       # make path to player
       entity = {row: (cy // TileSize).to_i, col: (cx // TileSize).to_i}
-      target = {row: (player.cy // TileSize).to_i, col: (player.cx // TileSize).to_i}
+      target = {row: (player.collision_cy // TileSize).to_i, col: (player.collision_cx // TileSize).to_i}
 
       @path = GSF::Path.find(entity, target, tiles)
     end
