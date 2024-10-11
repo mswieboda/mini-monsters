@@ -17,6 +17,7 @@ module MonsterMaze
     NextAttackDurationMin = 300 # milliseconds
     NextAttackDurationMax = 500 # milliseconds
     Damage = 5
+    SkipPathingRatio = 1.25
 
     def initialize(row = 0, col = 0)
       super
@@ -94,6 +95,7 @@ module MonsterMaze
       return false if cx > player.torch_cx + player.monster_follow_radius + player.size * 2
       return false if cy < player.torch_cy - player.monster_follow_radius - player.size * 2
       return false if cy > player.torch_cy + player.monster_follow_radius + player.size * 2
+      return false if MathHelpers.distance(cx, cy, player.cx, player.cy) < player.monster_radius * SkipPathingRatio
 
       collides?(Circle.new(player.monster_follow_radius), player.torch_cx, player.torch_cy)
     end
@@ -106,6 +108,11 @@ module MonsterMaze
       target = {row: (player.collision_cy // TileSize).to_i, col: (player.collision_cx // TileSize).to_i}
 
       @path = GSF::Path.find(entity, target, tiles)
+
+      # removes our cx, cy since we're already there
+      @path.shift
+
+      @path
     end
 
     def ready_to_attack?
@@ -142,27 +149,18 @@ module MonsterMaze
           @next_attack_timer.restart
           @attacking = false
         end
+      elsif !@path.empty? && MathHelpers.distance(cx, cy, p_cx, p_cy) >= p_dist * SkipPathingRatio
+        move_with_path(@path.first)
+      else
+        @path.clear
+        move_towards(p_cx, p_cy, p_dist, size)
       end
-
-      move_towards(p_cx, p_cy, p_dist, size) unless attacking?
 
       return if dx == 0 && dy == 0
 
       movement_speed = attacking? || attacked? ? attack_speed : speed
 
       update_movement(frame_time, speed: movement_speed, collidable_tiles: collidable_tiles, movables: movables)
-    end
-
-    def move_towards(p_cx, p_cy, p_dist, inner_threshold)
-      @dx = move_change_from_distance(p_cx, cx, p_dist, inner_threshold)
-      @dy = move_change_from_distance(p_cy, cy, p_dist, inner_threshold)
-    end
-
-    def move_change_from_distance(p_value, value, p_dist, inner_threshold)
-      dist = p_value - value
-
-      # TODO: this `- inner_threshold` is wrong, needs to be +/- range depending on direction
-      dist.abs > p_dist ? dist.sign : dist.abs < p_dist - inner_threshold ? -dist.sign : 0
     end
 
     def play_animation

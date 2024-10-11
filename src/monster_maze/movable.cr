@@ -9,6 +9,7 @@ module MonsterMaze
     getter dy : Int32 | Float32
     getter? moved
     getter collision_circle : Circle
+    getter path : GSF::Path::Cells
 
     Size = 64
     Radius = Size // 2
@@ -21,6 +22,7 @@ module MonsterMaze
       @dy = 0
       @moved = false
       @collision_circle = Circle.new(collision_radius)
+      @path = [] of GSF::Path::Cell
 
       jump_to_tile(row, col)
     end
@@ -138,6 +140,64 @@ module MonsterMaze
           @dy = 0
           break
         end
+      end
+    end
+
+    def d_zero?
+      @dx.zero? && @dy.zero?
+    end
+
+    def pathing_stay?(dist_x, dist_y)
+      d_zero? && dist_x.zero? && dist_y.zero?
+    end
+
+    def pathing_overpassed_target?(dist_x, dist_y)
+      !d_zero? && -@dx.sign * dist_x >= 0 && -@dy.sign * dist_y >= 0
+    end
+
+    def move_with_path(cell : GSF::Path::Cell)
+      cell_cx = cell[:col] * TileSize + TileSize // 2
+      cell_cy = cell[:row] * TileSize + TileSize // 2
+
+      dist_x = cell_cx - cx
+      dist_y = cell_cy - cy
+
+      if pathing_stay?(dist_x, dist_y)
+        # remove it from path
+        removed_cell = @path.shift
+      elsif pathing_overpassed_target?(dist_x, dist_y)
+        # remove it from path
+        removed_cell = @path.shift
+
+        # make sure it's exactly at center, move it backwards (glitchy)
+        jump_to_tile(removed_cell[:row], removed_cell[:col]) unless dist_x.zero? && dist_y.zero?
+
+        @dx = 0
+        @dy = 0
+      else
+        new_dx = dist_x.sign
+        new_dy = dist_y.sign
+
+        @dx = new_dx
+        @dy = new_dy
+      end
+    end
+
+    def move_towards(target_cx, target_cy, target_dist_threshold, inner_threshold)
+      @dx = delta_from_move_towards_target(cx, target_cx, target_dist_threshold, inner_threshold)
+      @dy = delta_from_move_towards_target(cy, target_cy, target_dist_threshold, inner_threshold)
+    end
+
+    def delta_from_move_towards_target(value, target_value, target_dist_threshold, inner_threshold)
+      dist = target_value - value
+
+      # TODO: this `- inner_threshold` is wrong, needs to be +/- range depending on direction
+      if dist.abs > target_dist_threshold
+        dist.sign
+      elsif dist.abs < target_dist_threshold - inner_threshold
+        -dist.sign
+      else
+        0
       end
     end
 
