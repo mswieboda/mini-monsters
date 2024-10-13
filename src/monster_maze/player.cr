@@ -161,11 +161,7 @@ module MonsterMaze
     end
 
     def init
-      @torch_duration_alpha = TorchMaxAlpha - 1
-      @torch_segment_timer.start
-      @last_dx = 0
-      @health = MaxHealth
-      reset_player_controller
+      reset
     end
 
     def reset

@@ -1,5 +1,3 @@
-require "json"
-require "./tile_map"
 require "./visibility"
 require "./monster"
 require "./rat"
@@ -7,20 +5,13 @@ require "./spider"
 require "./oil_pool"
 
 module MonsterMaze
-  class Level
+  class Level < GSF::TileMapLevel
     getter player : Player
-    getter rows : Int32
-    getter cols : Int32
-    getter tiles : Array(Array(Int32))
     getter monsters : Array(Monster)
     getter oil_pools : Array(OilPool)
     getter? exit
 
     @visibilities : Array(Array(Visibility))
-    @tile_map : TileMap
-    @tiles : Array(Array(Int32))
-    @tiles_as_cells : Array(Array(GSF::Path::Tile))
-    @collidable_tile_types : Array(Int32)
     @player_collidable_tiles : Array(TileData)
     @sound_buffer_oil_dip : SF::SoundBuffer
     @sound_oil_dip : SF::Sound
@@ -50,12 +41,10 @@ module MonsterMaze
     GameWinDuration = 500.milliseconds
 
     def initialize(@player : Player, @rows = 1, @cols = 1)
-      @tile_map = TileMap.new
-      @tiles = [] of Array(Int32)
-      @tiles_as_cells = [] of Array(GSF::Path::Tile)
+      super(@rows, @cols)
+
       @monsters = [] of Monster
       @visibilities = [] of Array(Visibility)
-      @collidable_tile_types = [] of Int32
       @player_collidable_tiles = [] of TileData
       @oil_pools = [] of OilPool
       @sound_buffer_oil_dip = SF::SoundBuffer.new
@@ -84,14 +73,6 @@ module MonsterMaze
 
     def tile_size
       TileSize
-    end
-
-    def width
-      tile_size * cols
-    end
-
-    def height
-      tile_size * rows
     end
 
     def v_rows
@@ -133,7 +114,7 @@ module MonsterMaze
     def init
       player.init
 
-      init_tiles
+      init_tiles # comes from TileMapLevel
       init_visibilities
       init_monsters
       init_sounds
@@ -154,55 +135,21 @@ module MonsterMaze
       @game_win_timer = Timer.new(GameWinDuration)
       @game_over_text = SF::Text.new("", Font.default, 48)
       @game_over_text.fill_color = TextColorFocused
+      @exit = false
     end
 
-    def init_tiles
-      return if tile_map_file.empty? || tile_sheet_file.empty?
-
-      json = JSON.parse(File.open(tile_map_file))
-      @rows = json["height"].as_i
-      @cols = json["width"].as_i
-
-      # tile data is 1-indexed not 0-indexed so subtract 1
-      tiles = json["data"].as_a.map { |j| j.as_i - 1 }
-      @tile_map = TileMap.new(tile_sheet_file, tile_size, tiles, rows, cols)
-      @tiles = tiles.in_slices_of(cols)
-
+     # overrides empty TileMapLevel method
+    def init_player_start(row : Int32, col : Int32)
       # player_start_row and player_start_row are 0-indexed
-      player.jump_to_tile(json["player_start_row"].as_i, json["player_start_col"].as_i)
+      player.jump_to_tile(row, col)
+    end
 
-      return if tile_sheet_data_file.empty?
-
-      json = JSON.parse(File.open(tile_sheet_data_file))
-
-      # sets tiles that are collidable from tile_sheet_data_file json
-      if raw_ranges = json.dig("collidables", "ranges")
-        # this file is 0-indexed
-        ranges = raw_ranges.as_a.map(&.as_a.map(&.as_i))
-
-        ranges.each do |range|
-          min, max = range
-
-          @collidable_tile_types += (min..max).to_a
-        end
-      end
-
-      # converts @tiles to Array((Array(GSF::Path::Tile))
-      @tiles_as_cells = @tiles.map do |cols|
-        cols.map do |tile|
-          @collidable_tile_types.includes?(tile) ? GSF::Path::Tile::Collidable : GSF::Path::Tile::Empty
-        end
-      end
-
+    # overrides empty TileMapLevel method
+    def init_tile_data(json : JSON::Any)
       # this file is 0-indexed from tile_sheet_data_file json
-      oil_pool_tile = json["oil_pool_tile"].as_i
-      init_oil_pools(oil_pool_tile)
-
-      spawn_tile = json["spawn_tile"].as_i
-      init_spawns(spawn_tile)
-
-      finish_tile = json["finish_tile"].as_i
-      init_finish_area(finish_tile)
+      init_oil_pools(json["oil_pool_tile"].as_i)
+      init_spawns(json["spawn_tile"].as_i)
+      init_finish_area(json["finish_tile"].as_i)
     end
 
     def init_oil_pools(oil_pool_tile)
@@ -499,12 +446,10 @@ module MonsterMaze
     end
 
     def draw(window : SF::RenderWindow)
-      window.draw(@tile_map)
+      super(window) # from TileMapLevel draws TileMap
 
       monsters.each(&.draw(window))
-
       oil_pools.each(&.draw(window, @oil_fill_sprite))
-
       player.draw(window)
 
       if Debug
@@ -514,7 +459,6 @@ module MonsterMaze
       end
 
       draw_visibility(window)
-
       player.draw_torch_visibility(window)
 
       draw_game_over_menu(window) if game_over? || (game_win? && @game_win_timer.done?)
