@@ -43,12 +43,12 @@ module MonsterMaze::Scene
 
       # NOTE: this doesn't work for smaller level sizes
       #       but leaving in for now in case we can modify it to work
-      # w = Screen.width / 2 - CenteredViewPadding
-      # h = Screen.height / 2 - CenteredViewPadding
-      # cx = w if cx < w
-      # cy = h if cy < h
-      # cx = level.width - w if cx > level.width - w
-      # cy = level.height - h if cy > level.height - h
+      w = Screen.width / 2 - CenteredViewPadding
+      h = Screen.height / 2 - CenteredViewPadding
+      cx = w if cx < w
+      cy = h if cy < h
+      cx = level.width - w if cx > level.width - w
+      cy = level.height - h if cy > level.height - h
 
       view.center = {cx, cy}
 
