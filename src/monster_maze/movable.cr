@@ -1,6 +1,3 @@
-require "./box"
-require "./circle"
-
 module MonsterMaze
   class Movable < GSF::Movable
     getter collision_circle : Circle
@@ -193,6 +190,10 @@ module MonsterMaze
 
     def collides?(movable : Movable)
       collides?(movable.collision_circle, movable.collision_cx, movable.collision_cy)
+    end
+
+    def collides?(radius, cx, cy)
+      collision_circle.collides?(collision_cx, collision_cy, radius, cx, cy)
     end
 
     def collides?(circle : Circle, cx, cy)

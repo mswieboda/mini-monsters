@@ -5,7 +5,6 @@ require "./monster"
 require "./rat"
 require "./spider"
 require "./oil_pool"
-require "./rect"
 
 module MonsterMaze
   class Level
@@ -28,7 +27,7 @@ module MonsterMaze
     @oil_fill_sprite : SF::Sprite
     @menu_items : GSF::MenuItems
     @spawn_tiles : Array(TileData)
-    @finish_area : Rect
+    @finish_area : Box
     @finish_area_x : Int32
     @finish_area_y : Int32
     @game_win_timer : Timer
@@ -75,7 +74,7 @@ module MonsterMaze
         initial_focused_index: 0
       )
       @spawn_tiles = [] of TileData
-      @finish_area = Rect.new
+      @finish_area = Box.new
       @finish_area_x = 0
       @finish_area_y = 0
       @game_win_timer = Timer.new(GameWinDuration)
@@ -251,7 +250,7 @@ module MonsterMaze
         raise "error: finish tiles are not either one single row or one single column"
       end
 
-      @finish_area = Rect.new(width: cols * TileSize, height: rows * TileSize)
+      @finish_area = Box.new(width: cols * TileSize, height: rows * TileSize)
       @finish_area_x = min_col * TileSize
       @finish_area_y = min_row * TileSize
     end
@@ -387,7 +386,7 @@ module MonsterMaze
       player.update(frame_time, keys, joysticks, width, height, @player_collidable_tiles)
 
       oil_pools.each do |oil_pool|
-        if player.collides?(Circle.new(oil_pool.radius), oil_pool.cx, oil_pool.cy)
+        if player.collides?(oil_pool.radius, oil_pool.cx, oil_pool.cy)
           play_sound(@sound_oil_dip)
           oil_pool.dip!
           player.torch_refill!
@@ -450,7 +449,7 @@ module MonsterMaze
         (min_col..max_col).each do |col|
           reset_visibility(row, col)
 
-          next unless collision_with_circle?(col * tile_size, row * tile_size, tile_size)
+          next unless player_visibility_collides?(col * tile_size, row * tile_size, tile_size)
 
           update_tile_visibility(row, col)
         end
@@ -489,14 +488,14 @@ module MonsterMaze
       size = VisibilitySize
 
       visibilities_from_tile(tile_row, tile_col).each do |visibility, row, col|
-        if !visibility.clear? && collision_with_circle?(col * size, row * size, size)
+        if !visibility.clear? && player_visibility_collides?(col * size, row * size, size)
           @visibilities[row][col] = Visibility::Clear
         end
       end
     end
 
-    def collision_with_circle?(x, y, size)
-      Box.collides?(size, x, y, player.visibility_radius, player.torch_cx, player.torch_cy)
+    def player_visibility_collides?(x, y, size)
+      Box.new(size).collides?(x, y, player.visibility_radius, player.torch_cx, player.torch_cy)
     end
 
     def draw(window : SF::RenderWindow)

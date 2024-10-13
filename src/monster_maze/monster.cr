@@ -98,7 +98,7 @@ module MonsterMaze
       return false if cy > player.torch_cy + player.monster_follow_radius + player.size * 2
       return false if MathHelpers.distance(cx, cy, player.cx, player.cy) < player.monster_radius * SkipPathingRatio
 
-      collides?(Circle.new(player.monster_follow_radius), player.torch_cx, player.torch_cy)
+      collides?(player.monster_follow_radius, player.torch_cx, player.torch_cy)
     end
 
     def follow_player!(player : Player, tiles : GSF::Path::Tiles)
