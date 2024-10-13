@@ -1,6 +1,5 @@
 require "../player"
 require "../level"
-require "../hud"
 
 module MonsterMaze::Scene
   class Main < GSF::Scene
@@ -13,11 +12,9 @@ module MonsterMaze::Scene
       super(:main)
 
       @level = Level.new(player)
-      @hud = HUD.new
     end
 
     def init
-      HUD.init
       level.init
       view_movement
     end
@@ -36,8 +33,6 @@ module MonsterMaze::Scene
 
       level.update(frame_time, keys, joysticks)
       view_movement if player.moved?
-
-      HUD.update(frame_time)
     end
 
     def view_movement
@@ -62,7 +57,6 @@ module MonsterMaze::Scene
 
     def draw(window)
       level.draw(window)
-      HUD.draw(window)
     end
   end
 end

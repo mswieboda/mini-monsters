@@ -1,3 +1,4 @@
+require "./font"
 require "./scene/start"
 require "./scene/main"
 
