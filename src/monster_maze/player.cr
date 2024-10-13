@@ -2,11 +2,11 @@ require "./movable"
 
 module MonsterMaze
   class Player < Movable
+    include GSF::PlayerController
+
     getter animations : GSF::Animations
     getter animations_flame : GSF::Animations
     getter health : Int32
-    getter? dead
-    getter death_timer : Timer
 
     Size = 96
     Speed = 352
@@ -34,21 +34,34 @@ module MonsterMaze
     CollisionYOffset = 96
     MaxHealth = 100
     DeadDarkenMin = 63
-    DeathAnimationDuration = 300.milliseconds
+
+    # NOTE: these come from GSF::PlayerController, it's not necessary to define
+    #       them here since they are defined in GSF::PlayerController
+    #       but for clarity I have them here, until I can get better with
+    #       including modules that use instance variables
+    @dead : Bool
+    @death_timer : Timer
 
     @torch_duration_alpha : Int32
     @last_dx : Int32
 
     def initialize(row = 0, col = 0)
-      super
+      super(row, col)
+
+      # START - from GSF::PlayerController
+      # these are needed in intialization, but `initialize_player_controller` will
+      # set their values correctly in GSF::PlayerController
+      @dead = false
+      @death_timer = Timer.new
+
+      initialize_player_controller
+      # END - from GSF::PlayerController
 
       @torch_duration_alpha = TorchMaxAlpha - 1
       @torch_segment_timer = Timer.new(TorchSegmentDuration)
       @torch_segment_timer.start
       @last_dx = 0
       @health = MaxHealth
-      @dead = false
-      @death_timer = Timer.new(DeathAnimationDuration)
 
       @animations = GSF::Animations.new(:idle_left)
       @animations_flame = GSF::Animations.new(:idle_flame_left)
@@ -152,8 +165,7 @@ module MonsterMaze
       @torch_segment_timer.start
       @last_dx = 0
       @health = MaxHealth
-      @dead = false
-      @death_timer.stop
+      reset_player_controller
     end
 
     def reset
@@ -161,13 +173,12 @@ module MonsterMaze
       @torch_segment_timer.start
       @last_dx = 0
       @health = MaxHealth
-      @dead = false
-      @death_timer.stop
+      reset_player_controller
     end
 
     def update(frame_time, keys : Keys, joysticks : Joysticks, level_width, level_height, collidable_tiles : Tiles)
-      update_movement_dx_input(keys, joysticks)
-      update_movement_dy_input(keys, joysticks)
+      @dx, @dy = movement_input(keys, joysticks)
+
       update_movement(frame_time, level_width: level_width, level_height: level_height, collidable_tiles: collidable_tiles)
 
       play_animations
@@ -247,11 +258,6 @@ module MonsterMaze
         @health = 0
         die!
       end
-    end
-
-    def die!
-      @death_timer.start unless dead?
-      @dead = true
     end
 
     def draw(window : SF::RenderWindow)

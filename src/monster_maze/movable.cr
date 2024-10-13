@@ -2,12 +2,7 @@ require "./box"
 require "./circle"
 
 module MonsterMaze
-  class Movable
-    getter x  : Int32 | Float32
-    getter y : Int32 | Float32
-    getter dx : Int32 | Float32
-    getter dy : Int32 | Float32
-    getter? moved
+  class Movable < GSF::Movable
     getter collision_circle : Circle
     getter path : GSF::Path::Cells
 
@@ -16,11 +11,8 @@ module MonsterMaze
     Speed = 256
 
     def initialize(row = 0, col = 0)
-      @x = 0
-      @y = 0
-      @dx = 0
-      @dy = 0
-      @moved = false
+      super(0, 0)
+
       @collision_circle = Circle.new(collision_radius)
       @path = [] of GSF::Path::Cell
 
@@ -73,26 +65,18 @@ module MonsterMaze
     )
       @moved = false
 
-      update_with_direction_and_speed(frame_time, speed)
-      move_with_level(level_width, level_height)
+      return unless move_with_speed(frame_time, speed)
+      return unless move_with_level(level_width, level_height)
 
-      return if dx == 0 && dy == 0
+      unless collidable_tiles.empty?
+        return unless move_with_collidable_tiles(collidable_tiles)
+      end
 
-      move_with_collidable_tiles(collidable_tiles) unless collidable_tiles.empty?
-
-      return if dx == 0 && dy == 0
-
-      move_with_movables(movables) unless movables.empty?
-
-      return if dx == 0 && dy == 0
+      unless movables.empty?
+        return unless move_with_movables(movables)
+      end
 
       move(dx, dy)
-    end
-
-    def update_with_direction_and_speed(frame_time, speed)
-      directional_speed = dx != 0 && dy != 0 ? speed / 1.4142 : speed
-      @dx *= (directional_speed * frame_time).to_f32
-      @dy *= (directional_speed * frame_time).to_f32
     end
 
     def move_with_level(level_width, level_height)
@@ -100,9 +84,13 @@ module MonsterMaze
         @dx = 0 if collision_x + dx < 0 || collision_cx + collision_radius + dx > level_width
       end
 
+      return unless moving?
+
       if level_height > 0
         @dy = 0 if collision_y + dy < 0 || collision_cy + collision_radius + dy > level_height
       end
+
+      moving?
     end
 
     def move_with_collidable_tiles(tiles)
@@ -115,7 +103,7 @@ module MonsterMaze
         end
       end
 
-      return if dx == 0 && dy == 0
+      return unless moving?
 
       tiles.each do |_tile, row, col|
         if collides?(0, dy, t_c_box, col * TileSize, row * TileSize)
@@ -123,6 +111,8 @@ module MonsterMaze
           break
         end
       end
+
+      moving?
     end
 
     def move_with_movables(movables)
@@ -133,7 +123,7 @@ module MonsterMaze
         end
       end
 
-      return if dx == 0 && dy == 0
+      return unless moving?
 
       movables.each do |movable|
         if collides?(0, dy, movable)
@@ -143,16 +133,12 @@ module MonsterMaze
       end
     end
 
-    def d_zero?
-      @dx.zero? && @dy.zero?
-    end
-
     def pathing_stay?(dist_x, dist_y)
-      d_zero? && dist_x.zero? && dist_y.zero?
+      !moving? && dist_x.zero? && dist_y.zero?
     end
 
     def pathing_overpassed_target?(dist_x, dist_y)
-      !d_zero? && -@dx.sign * dist_x >= 0 && -@dy.sign * dist_y >= 0
+      moving? && -@dx.sign * dist_x >= 0 && -@dy.sign * dist_y >= 0
     end
 
     def move_with_path(cell : GSF::Path::Cell)
@@ -199,17 +185,6 @@ module MonsterMaze
       else
         0
       end
-    end
-
-    def move(dx, dy)
-      jump(x + dx, y + dy)
-    end
-
-    def jump(x, y)
-      @x = x
-      @y = y
-
-      @moved = true
     end
 
     def jump_to_tile(row, col)

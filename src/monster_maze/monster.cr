@@ -7,7 +7,6 @@ module MonsterMaze
     getter? attacking
     getter? attacked
     getter next_attack_timer : Timer
-    getter path : Array(GSF::Path::Cell)
 
     CollisionRadius = 16
     Speed = 256
@@ -26,7 +25,6 @@ module MonsterMaze
       @attacking = false
       @attacked = false
       @next_attack_timer = Timer.new(NextAttackDurationMax.milliseconds, true)
-      @path = [] of GSF::Path::Cell
 
       # animations
       idle_right = GSF::Animation.new
@@ -89,8 +87,11 @@ module MonsterMaze
     end
 
     def follow_range?(player : Player)
+      # TODO: this is very inefficient,
+      #       need to figure out when following? monsters should regenerate path again
+      return true if following?
+
       # more efficient guards before doing box/circle collision detection
-      return false if following?
       return false if cx < player.torch_cx - player.monster_follow_radius - player.size * 2
       return false if cx > player.torch_cx + player.monster_follow_radius + player.size * 2
       return false if cy < player.torch_cy - player.monster_follow_radius - player.size * 2
